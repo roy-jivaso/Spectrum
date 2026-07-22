@@ -15,12 +15,12 @@ patch(DocumentsDetailsPanel.prototype, {
         if (!checked) {
             changes.expiry_date = false;
         }
-        await this.props.record.update(changes, { save: true });
+        await this.record.update(changes, { save: true });
     },
 
     async onExpiryDateChange(ev) {
         const value = ev.target.value;
-        await this.props.record.update(
+        await this.record.update(
             { expiry_date: value ? DateTime.fromISO(value) : false },
             { save: true }
         );
