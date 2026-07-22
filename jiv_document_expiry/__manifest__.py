@@ -18,8 +18,8 @@ Features:
   before the expiry date (configurable lead days via system parameter
   `jiv_document_expiry.reminder_days`, default 7)
 """,
-    'author': 'Zyvi Technologies',
-    'website': 'https://zyvitech.com',
+    'author': '',
+    'website': '',
     'license': 'LGPL-3',
     'depends': ['documents'],
     'data': [
