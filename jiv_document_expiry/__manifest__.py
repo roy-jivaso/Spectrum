@@ -26,6 +26,11 @@ Features:
         'views/documents_document_views.xml',
         'data/ir_cron.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'jiv_document_expiry/static/src/**/*',
+        ],
+    },
     'post_init_hook': 'post_init_hook',
     'installable': True,
     'application': False,

@@ -5,47 +5,38 @@ from . import models
 
 _logger = logging.getLogger(__name__)
 
-EXPIRY_ARCH = """<data>
-    <xpath expr="//form" position="inside">
-        <group name="expiry_tracking" string="Expiry Tracking">
-            <field name="track_expiry"/>
-            <field name="expiry_date"
-                   invisible="not track_expiry"
-                   required="track_expiry"/>
-            <field name="expiry_status"
-                   invisible="not track_expiry"/>
-        </group>
+KANBAN_FIELDS_ARCH = """<data>
+    <xpath expr="//templates" position="before">
+        <field name="track_expiry"/>
+        <field name="expiry_date"/>
+        <field name="expiry_status"/>
     </xpath>
 </data>"""
 
 
 def post_init_hook(env):
-    """Attach the expiry group to every primary form view of
-    documents.document, whatever their xml_ids are in this build.
-
-    The Documents details panel in Odoo 19 is rendered from form
-    view(s) whose xml_ids vary between builds (e.g. split info/tags
-    views), so we resolve them at install time instead of hardcoding
-    a ``ref``.
+    """Declare the expiry fields on every primary kanban view of
+    documents.document so the OWL details panel (which reads the
+    kanban/list record) has them loaded. The panel UI itself is added
+    via a JS template extension in static/src.
     """
     View = env['ir.ui.view']
     IMD = env['ir.model.data']
 
     targets = View.search([
         ('model', '=', 'documents.document'),
-        ('type', '=', 'form'),
+        ('type', '=', 'kanban'),
         ('mode', '=', 'primary'),
     ])
     if not targets:
         _logger.warning(
-            "jiv_document_expiry: no primary form views found for "
-            "documents.document; expiry fields will only be available "
-            "in the list view."
+            "jiv_document_expiry: no primary kanban views found for "
+            "documents.document."
         )
         return
 
     for target in targets:
-        xml_name = 'view_form_expiry_inherit_%s' % target.id
+        xml_name = 'view_kanban_expiry_inherit_%s' % target.id
         if IMD.search_count([
             ('module', '=', 'jiv_document_expiry'),
             ('name', '=', xml_name),
@@ -53,20 +44,19 @@ def post_init_hook(env):
             continue
         try:
             view = View.create({
-                'name': '%s.expiry.inherit' % (target.name or 'documents.form'),
+                'name': '%s.expiry.fields' % (target.name or 'documents.kanban'),
                 'model': 'documents.document',
                 'inherit_id': target.id,
                 'mode': 'extension',
                 'priority': 99,
-                'arch_base': EXPIRY_ARCH,
+                'arch_base': KANBAN_FIELDS_ARCH,
             })
         except Exception:
             _logger.exception(
-                "jiv_document_expiry: could not inherit form view %s (%s)",
+                "jiv_document_expiry: could not inherit kanban view %s (%s)",
                 target.id, target.name,
             )
             continue
-        # Register under this module so the view is removed on uninstall
         IMD.create({
             'module': 'jiv_document_expiry',
             'name': xml_name,
@@ -75,6 +65,6 @@ def post_init_hook(env):
             'noupdate': True,
         })
         _logger.info(
-            "jiv_document_expiry: added expiry group to form view %s (%s)",
+            "jiv_document_expiry: declared expiry fields on kanban view %s (%s)",
             target.id, target.name,
         )

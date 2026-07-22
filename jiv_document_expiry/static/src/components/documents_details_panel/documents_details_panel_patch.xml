@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates>
+
+    <t t-name="jiv_document_expiry.DocumentsDetailsPanel"
+       t-inherit="documents.DocumentsDetailsPanel"
+       t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('o_documents_details_panel_fields')]" position="inside">
+            <t t-if="record.data.type !== 'folder'">
+                <i class="fa fa-hourglass-half fa-fw mx-1 my-2" title="Track Expiry"/>
+                <div class="o_field_widget d-flex flex-row align-items-center">
+                    <BooleanField
+                        name="'track_expiry'"
+                        record="record"
+                        readonly="userPermissionViewOnly"
+                    />
+                    <span class="ms-1 text-muted">Track Expiry</span>
+                </div>
+                <t t-if="record.data.track_expiry">
+                    <i class="fa fa-calendar-times-o fa-fw mx-1 my-2" title="Expiry Date"/>
+                    <div class="o_field_widget">
+                        <DateTimeField
+                            name="'expiry_date'"
+                            record="record"
+                            readonly="userPermissionViewOnly"
+                            placeholder.translate="Set expiry date..."
+                        />
+                    </div>
+                </t>
+            </t>
+        </xpath>
+    </t>
+
+</templates>
