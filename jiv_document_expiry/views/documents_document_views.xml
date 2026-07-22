@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- LIST VIEW: add Track Expiry + Expiry Date as optional columns
+         with expired / expiring-soon row decorations -->
+    <record id="documents_view_list_inherit_expiry" model="ir.ui.view">
+        <field name="name">documents.document.list.inherit.expiry</field>
+        <field name="model">documents.document</field>
+        <field name="inherit_id" ref="documents.documents_view_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="attributes">
+                <attribute name="decoration-danger">expiry_status == 'expired'</attribute>
+                <attribute name="decoration-warning">expiry_status == 'expiring'</attribute>
+            </xpath>
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="track_expiry" optional="show"/>
+                <field name="expiry_date" optional="show"/>
+                <field name="expiry_status" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- FORM VIEW (details/inspector panel): expiry fields -->
+    <record id="document_view_form_inherit_expiry" model="ir.ui.view">
+        <field name="name">documents.document.form.inherit.expiry</field>
+        <field name="model">documents.document</field>
+        <field name="inherit_id" ref="documents.document_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <group name="expiry_tracking" string="Expiry Tracking">
+                    <field name="track_expiry"/>
+                    <field name="expiry_date"
+                           invisible="not track_expiry"
+                           required="track_expiry"/>
+                    <field name="expiry_status"
+                           invisible="not track_expiry"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- SEARCH VIEW: expiry filters -->
+    <record id="document_view_search_inherit_expiry" model="ir.ui.view">
+        <field name="name">documents.document.search.inherit.expiry</field>
+        <field name="model">documents.document</field>
+        <field name="inherit_id" ref="documents.document_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter string="Track Expiry"
+                        name="filter_track_expiry"
+                        domain="[('track_expiry', '=', True)]"/>
+                <filter string="Expired"
+                        name="filter_expired"
+                        domain="[('expiry_status', '=', 'expired')]"/>
+                <filter string="Expiring in 30 Days"
+                        name="filter_expiring_soon"
+                        domain="[('expiry_status', '=', 'expiring')]"/>
+                <filter string="Expiry Date"
+                        name="group_expiry_date"
+                        context="{'group_by': 'expiry_date'}"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

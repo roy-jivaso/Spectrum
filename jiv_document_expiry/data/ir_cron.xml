@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="ir_cron_document_expiry_reminder" model="ir.cron">
+            <field name="name">Documents: Expiry Reminder</field>
+            <field name="model_id" ref="documents.model_documents_document"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_document_expiry_reminder()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Lead days before expiry to schedule the reminder activity -->
+        <record id="config_param_reminder_days" model="ir.config_parameter">
+            <field name="key">jiv_document_expiry.reminder_days</field>
+            <field name="value">7</field>
+        </record>
+
+    </data>
+</odoo>
