@@ -5,21 +5,21 @@
        t-inherit="documents.DocumentsDetailsPanel"
        t-inherit-mode="extension">
         <xpath expr="//div[hasclass('o_documents_details_panel_fields')]" position="inside">
-            <t t-if="record.data.type !== 'folder'">
+            <t t-if="record.data.type !== 'folder' and expiryState.resId">
                 <i class="fa fa-hourglass-half fa-fw mx-1 my-2" title="Track Expiry"/>
                 <label class="d-flex flex-row align-items-center my-2 mb-0">
                     <input type="checkbox"
                            class="form-check-input m-0"
-                           t-att-checked="record.data.track_expiry"
+                           t-att-checked="expiryState.trackExpiry"
                            t-att-disabled="userPermissionViewOnly"
                            t-on-change="onToggleTrackExpiry"/>
                     <span class="ms-2">Track Expiry</span>
                 </label>
-                <t t-if="record.data.track_expiry">
+                <t t-if="expiryState.trackExpiry">
                     <i class="fa fa-calendar-times-o fa-fw mx-1 my-2" title="Expiry Date"/>
                     <input type="date"
                            class="o_input w-auto my-2"
-                           t-att-value="expiryDateInputValue"
+                           t-att-value="expiryState.expiryDate"
                            t-att-disabled="userPermissionViewOnly"
                            t-on-change="onExpiryDateChange"/>
                 </t>
