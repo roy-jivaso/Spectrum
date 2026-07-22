@@ -7,10 +7,10 @@
         <xpath expr="//div[hasclass('o_documents_details_panel_fields')]" position="inside">
             <t t-if="record.data.type !== 'folder' and expiryState.resId">
 <!--                <i class="fa fa-hourglass-half fa-fw mx-1 my-2" title="Track Expiry"/>-->
-                <div>
+                <div style="    display: flex;width: 50%;">
                       <label class="d-flex flex-row align-items-center my-2 mb-0">
 
-                    <span class="ms-2">Track Expiry</span>
+                    <span class="ms-2" style="    margin-right: 10px;">Track Expiry</span>
                      <input type="checkbox"
                            class="form-check-input m-0"
                            t-att-checked="expiryState.trackExpiry"
@@ -20,9 +20,9 @@
                 </div>
 
                 <t t-if="expiryState.trackExpiry">
-                    <div>
+                    <div style="    display: flex;width: 50%;">
                          <input type="date"
-                           class="o_input w-auto my-2"
+                           class="form-control w-auto my-2"
                            t-att-value="expiryState.expiryDate"
                            t-att-disabled="userPermissionViewOnly"
                            t-on-change="onExpiryDateChange"/>
