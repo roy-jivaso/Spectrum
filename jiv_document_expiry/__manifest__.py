@@ -26,6 +26,7 @@ Features:
         'views/documents_document_views.xml',
         'data/ir_cron.xml',
     ],
+    'post_init_hook': 'post_init_hook',
     'installable': True,
     'application': False,
 }

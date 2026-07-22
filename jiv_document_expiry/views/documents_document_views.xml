@@ -20,24 +20,9 @@
         </field>
     </record>
 
-    <!-- FORM VIEW (details/inspector panel): expiry fields -->
-    <record id="document_view_form_inherit_expiry" model="ir.ui.view">
-        <field name="name">documents.document.form.inherit.expiry</field>
-        <field name="model">documents.document</field>
-        <field name="inherit_id" ref="documents.document_view_form"/>
-        <field name="arch" type="xml">
-            <xpath expr="//form" position="inside">
-                <group name="expiry_tracking" string="Expiry Tracking">
-                    <field name="track_expiry"/>
-                    <field name="expiry_date"
-                           invisible="not track_expiry"
-                           required="track_expiry"/>
-                    <field name="expiry_status"
-                           invisible="not track_expiry"/>
-                </group>
-            </xpath>
-        </field>
-    </record>
+    <!-- FORM VIEW inherits are created dynamically in post_init_hook,
+         because the Documents details-panel form view xml_ids differ
+         across v19 builds (info / tags split views). -->
 
     <!-- SEARCH VIEW: expiry filters -->
     <record id="document_view_search_inherit_expiry" model="ir.ui.view">
