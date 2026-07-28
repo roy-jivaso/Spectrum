@@ -758,7 +758,7 @@ class CrmLeadProduct(models.Model):
         string="Opportunity Reference",
         required=True, ondelete='cascade', index=True, copy=False)
 
-    subscription_plan_id = fields.Many2one('sale.subscription.plan',related="lead_id.plan_id", string="Subscription Term")
+    # subscription_plan_id = fields.Many2one('sale.subscription.plan',related="lead_id.plan_id", string="Subscription Term")
     sequence = fields.Integer(string="Sequence", default=10)
     state = fields.Many2one(
         related='lead_id.stage_id',
