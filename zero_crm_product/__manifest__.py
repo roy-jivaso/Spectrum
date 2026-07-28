@@ -18,7 +18,7 @@
     "sequence": 0,
     'license': 'OPL-1',
     'demo': [],
-    "depends" : ['account','sale_management','sale_crm','jiv_crm_sale_custom'],
+    "depends" : ['account','sale_management','sale_crm'],
     'summary': """
         CRM Opportunity Lead Products work items""",
     'description': """
