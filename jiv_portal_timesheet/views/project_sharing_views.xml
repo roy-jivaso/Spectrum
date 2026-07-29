@@ -5,40 +5,31 @@
         Makes the Timesheets tab editable in the Project Sharing form
         (/my/projects/<id>/project_sharing/<task_id>).
 
-        BEFORE ENABLING: find the real view id on your instance.
+        The base tab is defined by
+        hr_timesheet.project_sharing_inherit_project_task_view_form, which
+        ships it locked at two levels:
 
-            v = env['ir.ui.view'].search([
-                ('model', '=', 'project.task'),
-                ('name', 'ilike', 'sharing'),
-            ])
-            for r in v:
-                print(r.id, r.xml_id, r.name)
+            <field name="timesheet_ids" ... readonly="1">
+                <list ... create="false" delete="0">
 
-        Look for the hr_timesheet inherit that adds the Timesheets page,
-        and put its xml_id in inherit_id below. The base form is
-        'project.project_sharing_project_task_view_form'; the timesheet
-        page is added on top of it by hr_timesheet.
-
-        Then add this file to __manifest__.py and upgrade.
+        Both have to be undone. High priority so this applies after
+        sale_timesheet_enterprise, which inherits the same base form.
     -->
     <record id="jiv_project_sharing_task_form" model="ir.ui.view">
         <field name="name">project.task.project.sharing.form.jiv.timesheet</field>
         <field name="model">project.task</field>
-        <!-- ADJUST THIS REF - see comment above -->
         <field name="inherit_id"
                ref="hr_timesheet.project_sharing_inherit_project_task_view_form"/>
         <field name="mode">extension</field>
+        <field name="priority">99</field>
         <field name="arch" type="xml">
 
-            <!--
-                The list is shipped read-only for portal users. Re-enable
-                creation and inline editing of the rows.
-            -->
+            <!-- Unlock the o2m field itself -->
             <xpath expr="//field[@name='timesheet_ids']" position="attributes">
                 <attribute name="readonly">0</attribute>
-                <attribute name="options">{'no_open': True}</attribute>
             </xpath>
 
+            <!-- Unlock the embedded list and make rows inline-editable -->
             <xpath expr="//field[@name='timesheet_ids']/list" position="attributes">
                 <attribute name="editable">bottom</attribute>
                 <attribute name="create">1</attribute>
@@ -46,13 +37,23 @@
             </xpath>
 
             <!--
-                Employee is computed server-side for portal users, so hide
-                the column rather than leaving an unfillable required
-                field on screen.
+                employee_id is resolved server-side in create() for portal
+                users, and they cannot write it anyway. Hide the column so
+                it is not an unfillable required cell.
             -->
             <xpath expr="//field[@name='timesheet_ids']/list/field[@name='employee_id']"
                    position="attributes">
                 <attribute name="column_invisible">1</attribute>
+            </xpath>
+
+            <!-- Surface the approval state so collaborators see status -->
+            <xpath expr="//field[@name='timesheet_ids']/list/field[@name='unit_amount']"
+                   position="after">
+                <field name="jiv_portal_state" string="Status"
+                       widget="badge" readonly="1" optional="show"
+                       decoration-warning="jiv_portal_state == 'draft'"
+                       decoration-success="jiv_portal_state == 'approved'"
+                       decoration-danger="jiv_portal_state == 'refused'"/>
             </xpath>
 
         </field>
