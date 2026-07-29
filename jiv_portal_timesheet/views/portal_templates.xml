@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Injects the entry form into the timesheet block of the portal task
+        page.
+
+        NOTE ON VERSIONS
+        ================
+        The timesheet block on the portal task page is
+        'hr_timesheet.portal_my_task_timesheets_table' on Odoo 17 and 18.
+        On Odoo 16 it is 'hr_timesheet.portal_my_task_timesheet_table'
+        (singular 'timesheet'), and on 19 the surrounding markup moved to
+        a card layout. If the module fails to load with "External ID not
+        found", adjust the inherit_id below to match your version.
+    -->
+    <template id="jiv_portal_task_timesheet_form"
+              inherit_id="hr_timesheet.portal_my_task_timesheets_table"
+              name="Portal: Log Time Form">
+        <xpath expr="//table" position="after">
+
+            <t t-set="jiv_can_log"
+               t-value="task.project_id.sudo()._jiv_portal_timesheet_enabled()"/>
+            <t t-set="jiv_today"
+               t-value="context_today().strftime('%Y-%m-%d')"/>
+
+            <div t-if="jiv_can_log" class="jiv-portal-ts mt-3">
+
+                <div t-if="request.params.get('ts_success')"
+                     class="alert alert-success alert-dismissible" role="alert">
+                    Your time entry has been recorded.
+                    <button type="button" class="btn-close"
+                            data-bs-dismiss="alert"/>
+                </div>
+
+                <div t-if="request.params.get('ts_error')"
+                     class="alert alert-danger alert-dismissible" role="alert">
+                    <t t-esc="request.session.pop('jiv_ts_error', 'The entry could not be saved.')"/>
+                    <button type="button" class="btn-close"
+                            data-bs-dismiss="alert"/>
+                </div>
+
+                <a role="button" class="btn btn-sm btn-primary"
+                   data-bs-toggle="collapse" href="#jivLogTime"
+                   aria-expanded="false" aria-controls="jivLogTime">
+                    <i class="fa fa-plus me-1"/>Log Time
+                </a>
+
+                <div class="collapse mt-3" id="jivLogTime">
+                    <form class="card card-body"
+                          t-attf-action="/my/task/#{task.id}/timesheet/new"
+                          method="post">
+                        <input type="hidden" name="csrf_token"
+                               t-att-value="request.csrf_token()"/>
+                        <input type="hidden" name="access_token"
+                               t-att-value="access_token"/>
+
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="form-label" for="jiv_ts_date">
+                                    Date
+                                </label>
+                                <input type="date" id="jiv_ts_date"
+                                       name="date" class="form-control"
+                                       t-att-value="jiv_today" required="required"/>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label" for="jiv_ts_hours">
+                                    Time Spent
+                                </label>
+                                <input type="text" id="jiv_ts_hours"
+                                       name="unit_amount" class="form-control"
+                                       placeholder="1.5 or 1:30"
+                                       required="required"/>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label" for="jiv_ts_desc">
+                                    Description
+                                </label>
+                                <input type="text" id="jiv_ts_desc"
+                                       name="name" class="form-control"
+                                       placeholder="What did you work on?"/>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                Save Entry
+                            </button>
+                            <a role="button" class="btn btn-link"
+                               data-bs-toggle="collapse" href="#jivLogTime">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </xpath>
+    </template>
+
+    <!--
+        Adds an approval-status badge and a delete action to each row of
+        the existing timesheet table.
+    -->
+    <template id="jiv_portal_task_timesheet_rows"
+              inherit_id="hr_timesheet.portal_my_task_timesheets_table"
+              name="Portal: Timesheet Status Column">
+        <xpath expr="//tbody/tr" position="inside">
+            <td class="text-end">
+                <span t-if="timesheet.jiv_portal_state == 'draft'"
+                      class="badge text-bg-warning">To Approve</span>
+                <span t-elif="timesheet.jiv_portal_state == 'approved'"
+                      class="badge text-bg-success">Approved</span>
+                <span t-elif="timesheet.jiv_portal_state == 'refused'"
+                      class="badge text-bg-danger"
+                      t-att-title="timesheet.jiv_refusal_reason">Refused</span>
+
+                <form t-if="timesheet.jiv_portal_state == 'draft' and timesheet.user_id.id == request.env.user.id"
+                      class="d-inline"
+                      t-attf-action="/my/timesheet/#{timesheet.id}/delete"
+                      method="post"
+                      onsubmit="return confirm('Delete this time entry?');">
+                    <input type="hidden" name="csrf_token"
+                           t-att-value="request.csrf_token()"/>
+                    <input type="hidden" name="access_token"
+                           t-att-value="access_token"/>
+                    <button type="submit"
+                            class="btn btn-sm btn-link text-danger p-0 ms-2"
+                            title="Delete">
+                        <i class="fa fa-trash"/>
+                    </button>
+                </form>
+            </td>
+        </xpath>
+        <xpath expr="//thead/tr" position="inside">
+            <th class="text-end">Status</th>
+        </xpath>
+    </template>
+
+</odoo>

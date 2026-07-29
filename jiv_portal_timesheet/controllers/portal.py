@@ -1,0 +1,159 @@
+import logging
+
+from odoo import _, fields, http
+from odoo.exceptions import AccessError, MissingError, UserError, ValidationError
+from odoo.http import request
+
+from odoo.addons.portal.controllers.portal import CustomerPortal
+
+_logger = logging.getLogger(__name__)
+
+
+class JivPortalTimesheet(CustomerPortal):
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+    def _jiv_get_task(self, task_id, access_token=None):
+        """Resolve the task through the standard portal access check.
+
+        ``_document_check_access`` is what enforces the share access token
+        and the portal record rules, so it must stay in front of any sudo
+        operation.
+        """
+        return self._document_check_access(
+            'project.task', int(task_id), access_token)
+
+    def _jiv_ensure_can_log(self, task):
+        project = task.project_id
+        if not project._jiv_portal_timesheet_enabled():
+            raise AccessError(_(
+                'Time logging is not enabled for this project.'))
+        # Read access alone is not enough: the collaborator needs Edit.
+        try:
+            task.check_access_rights('write')
+            task.check_access_rule('write')
+        except AccessError:
+            raise AccessError(_(
+                'You have read-only access to this task and cannot log '
+                'time on it.'))
+
+    def _jiv_parse_hours(self, raw):
+        """Accept both 1.5 and 1:30 style input."""
+        raw = (raw or '').strip().replace(',', '.')
+        if not raw:
+            raise ValidationError(_('Please enter the time spent.'))
+        if ':' in raw:
+            hours, _sep, minutes = raw.partition(':')
+            try:
+                return int(hours or 0) + int(minutes or 0) / 60.0
+            except ValueError:
+                raise ValidationError(
+                    _('Invalid time format. Use 1.5 or 1:30.'))
+        try:
+            return float(raw)
+        except ValueError:
+            raise ValidationError(
+                _('Invalid time format. Use 1.5 or 1:30.'))
+
+    def _jiv_redirect(self, task, access_token=None, error=None, success=None):
+        url = '/my/task/%s' % task.id
+        params = []
+        if access_token:
+            params.append('access_token=%s' % access_token)
+        if error:
+            # The message itself travels in the session, not the URL.
+            params.append('ts_error=1')
+        if success:
+            params.append('ts_success=1')
+        if params:
+            url += '?' + '&'.join(params)
+        return request.redirect(url + '#timesheets')
+
+    # ------------------------------------------------------------------
+    # Create
+    # ------------------------------------------------------------------
+    @http.route(['/my/task/<int:task_id>/timesheet/new'], type='http',
+                auth='public', website=True, methods=['POST'], csrf=True)
+    def jiv_portal_timesheet_create(self, task_id, access_token=None, **post):
+        try:
+            task_sudo = self._jiv_get_task(task_id, access_token)
+        except (AccessError, MissingError):
+            return request.redirect('/my')
+
+        try:
+            self._jiv_ensure_can_log(task_sudo)
+            unit_amount = self._jiv_parse_hours(post.get('unit_amount'))
+            date = post.get('date') or fields.Date.context_today(
+                request.env.user)
+            employee = request.env.user._jiv_get_timesheet_employee(
+                company=task_sudo.company_id)
+
+            require_approval = request.env['ir.config_parameter'].sudo(
+            ).get_param('jiv_portal_timesheet.require_approval', 'True')
+
+            vals = {
+                'name': (post.get('name') or '').strip() or _('/'),
+                'date': date,
+                'unit_amount': unit_amount,
+                'project_id': task_sudo.project_id.id,
+                'task_id': task_sudo.id,
+                'employee_id': employee.id,
+                'user_id': request.env.user.id,
+                'company_id': task_sudo.company_id.id,
+                'jiv_from_portal': True,
+                'jiv_portal_state': 'draft' if require_approval else 'approved',
+            }
+            request.env['account.analytic.line'].sudo().create(vals)
+        except (UserError, ValidationError, AccessError) as exc:
+            request.session['jiv_ts_error'] = str(exc)
+            return self._jiv_redirect(task_sudo, access_token, error='1')
+        except Exception:
+            _logger.exception(
+                'Portal timesheet creation failed for task %s', task_id)
+            request.session['jiv_ts_error'] = _(
+                'The entry could not be saved. Please try again.')
+            return self._jiv_redirect(task_sudo, access_token, error='1')
+
+        return self._jiv_redirect(task_sudo, access_token, success='1')
+
+    # ------------------------------------------------------------------
+    # Update
+    # ------------------------------------------------------------------
+    @http.route(['/my/timesheet/<int:line_id>/edit'], type='http',
+                auth='user', website=True, methods=['POST'], csrf=True)
+    def jiv_portal_timesheet_edit(self, line_id, access_token=None, **post):
+        line = request.env['account.analytic.line'].browse(int(line_id))
+        try:
+            line.check_access_rights('write')
+            line.check_access_rule('write')
+            task_sudo = self._jiv_get_task(line.task_id.id, access_token)
+            self._jiv_ensure_can_log(task_sudo)
+            line.write({
+                'name': (post.get('name') or '').strip() or _('/'),
+                'date': post.get('date') or line.date,
+                'unit_amount': self._jiv_parse_hours(post.get('unit_amount')),
+            })
+        except (AccessError, MissingError):
+            return request.redirect('/my')
+        except (UserError, ValidationError) as exc:
+            request.session['jiv_ts_error'] = str(exc)
+            return self._jiv_redirect(line.task_id, access_token, error='1')
+        return self._jiv_redirect(task_sudo, access_token, success='1')
+
+    # ------------------------------------------------------------------
+    # Delete
+    # ------------------------------------------------------------------
+    @http.route(['/my/timesheet/<int:line_id>/delete'], type='http',
+                auth='user', website=True, methods=['POST'], csrf=True)
+    def jiv_portal_timesheet_delete(self, line_id, access_token=None, **post):
+        line = request.env['account.analytic.line'].browse(int(line_id))
+        task = line.task_id
+        try:
+            line.unlink()
+        except (AccessError, MissingError):
+            return request.redirect('/my')
+        except UserError as exc:
+            request.session['jiv_ts_error'] = str(exc)
+            return self._jiv_redirect(task, access_token, error='1')
+        return self._jiv_redirect(task, access_token, success='1')

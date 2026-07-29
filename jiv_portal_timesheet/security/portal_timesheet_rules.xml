@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Read rule: a portal collaborator sees every timesheet line on the
+        tasks of a project shared with them. Narrow the domain to
+        ('user_id', '=', user.id) if collaborators must not see each
+        other's logged time.
+    -->
+    <record id="jiv_analytic_line_portal_read_rule" model="ir.rule">
+        <field name="name">Portal: read timesheets on shared tasks</field>
+        <field name="model_id" ref="analytic.model_account_analytic_line"/>
+        <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="domain_force">
+            [('project_id.privacy_visibility', '=', 'portal'),
+             ('project_id.jiv_allow_portal_timesheet', '=', True),
+             ('project_id.message_partner_ids', 'in', [user.partner_id.id])]
+        </field>
+    </record>
+
+    <!--
+        Write/create/unlink rule: only own lines, only while still
+        awaiting approval. Once approved the line is frozen.
+    -->
+    <record id="jiv_analytic_line_portal_write_rule" model="ir.rule">
+        <field name="name">Portal: manage own draft timesheets</field>
+        <field name="model_id" ref="analytic.model_account_analytic_line"/>
+        <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+        <field name="perm_read" eval="False"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="domain_force">
+            [('user_id', '=', user.id),
+             ('jiv_from_portal', '=', True),
+             ('jiv_portal_state', 'in', ['draft', False]),
+             ('project_id.privacy_visibility', '=', 'portal'),
+             ('project_id.jiv_allow_portal_timesheet', '=', True)]
+        </field>
+    </record>
+
+    <!--
+        Portal users need to read their own employee record so the
+        employee_id compute and the _check_employee_id constraint resolve.
+    -->
+    <record id="jiv_hr_employee_portal_rule" model="ir.rule">
+        <field name="name">Portal: read own employee record</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="domain_force">[('user_id', '=', user.id)]</field>
+    </record>
+
+</odoo>
