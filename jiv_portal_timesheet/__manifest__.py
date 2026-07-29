@@ -17,15 +17,14 @@ Key points
   user approves them, so they can be excluded from invoicing.
 * Users may only edit/delete their own lines, and only while unvalidated.
 """,
-    'author': 'Zyvi Technologies',
-    'website': 'https://www.zyvitech.com',
+
     'category': 'Services/Timesheets',
     'license': 'LGPL-3',
     'depends': ['hr_timesheet', 'project', 'portal'],
     'data': [
         'security/ir.model.access.csv',
         'security/portal_timesheet_rules.xml',
-        'views/res_config_settings_views.xml',
+        'data/portal_timesheet_data.xml',
         'views/hr_timesheet_views.xml',
         'views/portal_timesheet_page.xml',
         'views/portal_templates_inline.xml',

@@ -16,8 +16,11 @@ class ProjectProject(models.Model):
     def _jiv_portal_timesheet_enabled(self):
         """True when this project accepts portal timesheet entries."""
         self.ensure_one()
+        # 'allow_timesheets' comes from hr_timesheet; guard in case the
+        # field is absent or renamed on a given build.
+        timesheets_on = getattr(self, 'allow_timesheets', True)
         return bool(
             self.jiv_allow_portal_timesheet
-            and self.allow_timesheets
+            and timesheets_on
             and self.privacy_visibility == 'portal'
         )

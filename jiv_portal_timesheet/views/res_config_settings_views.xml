@@ -1,6 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!--
+        OPTIONAL - NOT LOADED BY DEFAULT
+        ================================
+        Inherits project.res_config_settings_view_form. The <app>/<block>
+        structure and block names changed in Odoo 19, so this is left out
+        of the manifest to guarantee a clean install.
+
+        Defaults are shipped as ir.config_parameter records in
+        data/portal_timesheet_data.xml, and can be edited under
+        Settings > Technical > System Parameters without this view.
+
+        To enable: verify the xpath below matches your build, add
+            'views/res_config_settings_views.xml',
+        to __manifest__.py (before views/hr_timesheet_views.xml) and
+        upgrade the module.
+    -->
+
+
     <record id="jiv_res_config_settings_view_form" model="ir.ui.view">
         <field name="name">res.config.settings.form.jiv.portal.timesheet</field>
         <field name="model">res.config.settings</field>

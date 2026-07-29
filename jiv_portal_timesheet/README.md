@@ -13,8 +13,10 @@ stays read-only for `base.group_portal`, and — more importantly —
 ## Install order
 
 1. Install the module.
-2. **Settings > Project > Portal Timesheets** — decide whether to
-   auto-create employees, set the back-dating window and max hours.
+2. Defaults are installed as system parameters (auto-create employee
+   ON, approval required, 7-day back-dating, 24h max per entry). Adjust
+   under **Settings > Technical > System Parameters**, keys prefixed
+   `jiv_portal_timesheet.`, or enable the optional Settings view below.
 3. On the project: enable *Timesheets*, set visibility to
    *Invited portal users and all internal users*, then tick
    **Portal Timesheet Entry**.
@@ -32,6 +34,7 @@ XPath breaks the whole install:
 |---|---|---|
 | `views/portal_templates_inline.xml` | "Log Time" button on the portal task page | View ships `active="False"`. Settings > Technical > Views > *Portal: Task Log Time Button* > Active |
 | `views/hr_timesheet_views_optional.xml` | Approval columns + filters on the backend timesheet list | Add to `data` in `__manifest__.py`, then upgrade |
+| `views/res_config_settings_views.xml` | Settings screen under Settings > Project | Add to `data` in `__manifest__.py`, then upgrade |
 
 Verify the IDs first, in the Odoo shell:
 

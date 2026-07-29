@@ -33,6 +33,51 @@ class AccountAnalyticLine(models.Model):
         string='Refusal Reason', copy=False)
 
     # ------------------------------------------------------------------
+    # Creation from the Project Sharing form
+    # ------------------------------------------------------------------
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Fill in what a portal user cannot supply.
+
+        In the Project Sharing form the OWL client writes analytic lines
+        straight through the ORM, so there is no controller to resolve
+        the employee or stamp the portal flag. Do it here instead.
+        """
+        if self.env.user._is_portal():
+            for vals in vals_list:
+                task = self.env['project.task'].sudo().browse(
+                    vals.get('task_id')) if vals.get('task_id') else None
+                if not task or not task.exists():
+                    raise UserError(_(
+                        'Time can only be recorded against a task.'))
+                if not task.project_id.sudo()._jiv_portal_timesheet_enabled():
+                    raise AccessError(_(
+                        'Time logging is not enabled for this project.'))
+
+                employee = self.env.user._jiv_get_timesheet_employee(
+                    company=task.company_id or self.env.company)
+
+                require_approval = self.env['ir.config_parameter'].sudo(
+                ).get_param('jiv_portal_timesheet.require_approval')
+
+                vals.update({
+                    'employee_id': employee.id,
+                    'user_id': self.env.user.id,
+                    'project_id': task.project_id.id,
+                    'jiv_from_portal': True,
+                    'jiv_portal_state': 'draft' if require_approval else 'approved',
+                })
+                vals.setdefault('date', fields.Date.context_today(self))
+                if not vals.get('name'):
+                    vals['name'] = '/'
+            # The employee and project links are not writable by portal
+            # users, so the insert itself has to run elevated. Access was
+            # already checked against the task above.
+            return super(AccountAnalyticLine,
+                         self.sudo()).create(vals_list).with_env(self.env)
+        return super().create(vals_list)
+
+    # ------------------------------------------------------------------
     # Guards
     # ------------------------------------------------------------------
     @api.constrains('unit_amount')
