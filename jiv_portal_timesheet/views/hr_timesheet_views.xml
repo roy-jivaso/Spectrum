@@ -7,10 +7,26 @@
         <field name="model">project.project</field>
         <field name="inherit_id" ref="project.edit_project"/>
         <field name="arch" type="xml">
-            <field name="allow_timesheets" position="after">
-                <field name="jiv_allow_portal_timesheet"
-                       invisible="not allow_timesheets or privacy_visibility != 'portal'"/>
-            </field>
+            <!--
+                Anchored on //sheet rather than a named field: in Odoo 19
+                'allow_timesheets' is no longer rendered on this form, and
+                the surrounding groups are not stable across versions.
+                A form view always has a sheet.
+            -->
+            <xpath expr="//sheet" position="inside">
+                <group name="jiv_portal_timesheet_group"
+                       string="Portal Collaboration">
+                    <field name="privacy_visibility" invisible="1"/>
+                    <field name="jiv_allow_portal_timesheet"
+                           invisible="privacy_visibility != 'portal'"/>
+                    <div class="text-muted small"
+                         invisible="not jiv_allow_portal_timesheet">
+                        Collaborators shared with Edit access can log time at
+                        /my/task/&lt;id&gt;/timesheets. Entries require approval
+                        before they count as validated.
+                    </div>
+                </group>
+            </xpath>
         </field>
     </record>
 
