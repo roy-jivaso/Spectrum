@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Standalone timesheet page: /my/task/<id>/timesheets
+
+        This template inherits nothing, so it cannot break on an Odoo 19
+        external-ID rename. It is the safe baseline. The inline version
+        that injects the form into the task page itself lives in
+        views/portal_templates_inline.xml and is disabled by default.
+    -->
+    <template id="jiv_portal_task_timesheets_page"
+              name="Portal: Task Timesheets">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+
+            <t t-call="portal.portal_back_in_edit_mode">
+                <t t-set="backend_url"
+                   t-value="'/odoo/project.task/%s' % task.id"/>
+            </t>
+
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h4 class="mb-1">
+                        Time Entries
+                        <small class="text-muted">
+                            &amp;mdash; <t t-out="task.name"/>
+                        </small>
+                    </h4>
+                    <p class="text-muted small">
+                        Project: <t t-out="task.project_id.name"/>
+                    </p>
+                </div>
+            </div>
+
+            <div t-if="request.params.get('ts_success')"
+                 class="alert alert-success alert-dismissible" role="alert">
+                Your time entry has been recorded.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"/>
+            </div>
+
+            <div t-if="request.params.get('ts_error')"
+                 class="alert alert-danger alert-dismissible" role="alert">
+                <t t-out="request.session.pop('jiv_ts_error', 'The entry could not be saved.')"/>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"/>
+            </div>
+
+            <table t-if="lines" class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th class="text-end">Hours</th>
+                        <th class="text-end">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="lines" t-as="line">
+                        <td><span t-field="line.date"/></td>
+                        <td><span t-field="line.name"/></td>
+                        <td class="text-end">
+                            <span t-field="line.unit_amount"
+                                  t-options='{"widget": "float_time"}'/>
+                        </td>
+                        <td class="text-end">
+                            <span t-if="line.jiv_portal_state == 'draft'"
+                                  class="badge text-bg-warning">To Approve</span>
+                            <span t-elif="line.jiv_portal_state == 'approved'"
+                                  class="badge text-bg-success">Approved</span>
+                            <span t-elif="line.jiv_portal_state == 'refused'"
+                                  class="badge text-bg-danger"
+                                  t-att-title="line.jiv_refusal_reason">Refused</span>
+                            <span t-else="" class="badge text-bg-secondary">Recorded</span>
+
+                            <form t-if="line.jiv_portal_state == 'draft' and line.user_id.id == request.env.user.id"
+                                  class="d-inline"
+                                  t-attf-action="/my/timesheet/#{line.id}/delete"
+                                  method="post"
+                                  onsubmit="return confirm('Delete this time entry?');">
+                                <input type="hidden" name="csrf_token"
+                                       t-att-value="request.csrf_token()"/>
+                                <input type="hidden" name="access_token"
+                                       t-att-value="access_token"/>
+                                <button type="submit"
+                                        class="btn btn-sm btn-link text-danger p-0 ms-2"
+                                        title="Delete">
+                                    <i class="fa fa-trash"/>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="fw-bold">
+                        <td colspan="2" class="text-end">Total</td>
+                        <td class="text-end">
+                            <span t-out="total_hours"
+                                  t-options='{"widget": "float_time"}'/>
+                        </td>
+                        <td/>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <p t-else="" class="text-muted">No time recorded yet.</p>
+
+            <div t-if="can_log" class="jiv-portal-ts card card-body mt-3">
+                <h6 class="mb-3">Log Time</h6>
+                <form t-attf-action="/my/task/#{task.id}/timesheet/new"
+                      method="post">
+                    <input type="hidden" name="csrf_token"
+                           t-att-value="request.csrf_token()"/>
+                    <input type="hidden" name="access_token"
+                           t-att-value="access_token"/>
+
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label class="form-label" for="jiv_ts_date">Date</label>
+                            <input type="date" id="jiv_ts_date" name="date"
+                                   class="form-control" t-att-value="today"
+                                   required="required"/>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" for="jiv_ts_hours">Time Spent</label>
+                            <input type="text" id="jiv_ts_hours"
+                                   name="unit_amount" class="form-control"
+                                   placeholder="1.5 or 1:30" required="required"/>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label" for="jiv_ts_desc">Description</label>
+                            <input type="text" id="jiv_ts_desc" name="name"
+                                   class="form-control"
+                                   placeholder="What did you work on?"/>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">Save Entry</button>
+                        <a t-attf-href="/my/task/#{task.id}"
+                           class="btn btn-link">Back to Task</a>
+                    </div>
+                </form>
+            </div>
+
+            <div t-else="" class="alert alert-info mt-3">
+                Time logging is not enabled for this project, or you have
+                read-only access to this task.
+            </div>
+        </t>
+    </template>
+
+</odoo>

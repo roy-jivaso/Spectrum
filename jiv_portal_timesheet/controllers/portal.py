@@ -57,7 +57,7 @@ class JivPortalTimesheet(CustomerPortal):
                 _('Invalid time format. Use 1.5 or 1:30.'))
 
     def _jiv_redirect(self, task, access_token=None, error=None, success=None):
-        url = '/my/task/%s' % task.id
+        url = '/my/task/%s/timesheets' % task.id
         params = []
         if access_token:
             params.append('access_token=%s' % access_token)
@@ -69,6 +69,38 @@ class JivPortalTimesheet(CustomerPortal):
         if params:
             url += '?' + '&'.join(params)
         return request.redirect(url + '#timesheets')
+
+    # ------------------------------------------------------------------
+    # Standalone page
+    # ------------------------------------------------------------------
+    @http.route(['/my/task/<int:task_id>/timesheets'], type='http',
+                auth='public', website=True)
+    def jiv_portal_task_timesheets(self, task_id, access_token=None, **kw):
+        try:
+            task_sudo = self._jiv_get_task(task_id, access_token)
+        except (AccessError, MissingError):
+            return request.redirect('/my')
+
+        can_log = True
+        try:
+            self._jiv_ensure_can_log(task_sudo)
+        except AccessError:
+            can_log = False
+
+        lines = task_sudo.timesheet_ids.filtered(
+            lambda l: l.user_id == request.env.user)
+
+        return request.render(
+            'jiv_portal_timesheet.jiv_portal_task_timesheets_page', {
+                'task': task_sudo,
+                'lines': lines.sorted('date', reverse=True),
+                'total_hours': sum(lines.mapped('unit_amount')),
+                'can_log': can_log,
+                'today': fields.Date.context_today(
+                    request.env.user).strftime('%Y-%m-%d'),
+                'access_token': access_token,
+                'page_name': 'task_timesheets',
+            })
 
     # ------------------------------------------------------------------
     # Create

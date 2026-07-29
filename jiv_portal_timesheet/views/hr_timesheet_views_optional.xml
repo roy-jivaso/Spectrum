@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        OPTIONAL - NOT LOADED BY DEFAULT
+        ================================
+        These two views inherit hr_timesheet list/search views. Their
+        external IDs have changed between Odoo versions, so this file is
+        left out of the manifest to guarantee a clean install.
+
+        To enable: confirm both IDs resolve on your instance, then add
+            'views/hr_timesheet_views_optional.xml',
+        to the data list in __manifest__.py and upgrade the module.
+
+        Without this file the approval fields still exist and the server
+        actions still work - you just add the columns manually via the
+        list view's optional-columns selector.
+    -->
+
+    <!-- Timesheet list: approval state and inline approve/refuse -->
+    <record id="jiv_timesheet_list_view" model="ir.ui.view">
+        <field name="name">account.analytic.line.list.jiv.portal</field>
+        <field name="model">account.analytic.line</field>
+        <field name="inherit_id" ref="hr_timesheet.hr_timesheet_line_tree"/>
+        <field name="arch" type="xml">
+            <field name="unit_amount" position="after">
+                <field name="jiv_from_portal" optional="hide"/>
+                <field name="jiv_portal_state" optional="show"
+                       widget="badge"
+                       decoration-warning="jiv_portal_state == 'draft'"
+                       decoration-success="jiv_portal_state == 'approved'"
+                       decoration-danger="jiv_portal_state == 'refused'"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Filters -->
+    <record id="jiv_timesheet_search_view" model="ir.ui.view">
+        <field name="name">account.analytic.line.search.jiv.portal</field>
+        <field name="model">account.analytic.line</field>
+        <field name="inherit_id" ref="hr_timesheet.hr_timesheet_line_search"/>
+        <field name="arch" type="xml">
+            <search position="inside">
+                <separator/>
+                <filter name="jiv_portal_lines" string="From Portal"
+                        domain="[('jiv_from_portal', '=', True)]"/>
+                <filter name="jiv_to_approve" string="Portal: To Approve"
+                        domain="[('jiv_portal_state', '=', 'draft')]"/>
+                <filter name="jiv_approved" string="Portal: Approved"
+                        domain="[('jiv_portal_state', '=', 'approved')]"/>
+            </search>
+        </field>
+    </record>
+
+
+</odoo>

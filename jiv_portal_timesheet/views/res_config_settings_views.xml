@@ -6,7 +6,9 @@
         <field name="model">res.config.settings</field>
         <field name="inherit_id" ref="project.res_config_settings_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//block[@id='project_time_settings']" position="inside">
+            <xpath expr="//app[@name='project']" position="inside">
+                <block title="Portal Timesheets"
+                       id="jiv_portal_timesheet_block">
 
                 <setting id="jiv_portal_ts_approval"
                          string="Approve Portal Timesheets"
@@ -45,6 +47,7 @@
                     </div>
                 </setting>
 
+                </block>
             </xpath>
         </field>
     </record>

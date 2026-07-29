@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        OPTIONAL / DISABLED BY DEFAULT
+        ==============================
+        Adds a "Log Time" button on the portal task page linking to the
+        standalone timesheet page. It is shipped inactive because the
+        anchor element on the Odoo 19 portal task page depends on which
+        project/timesheet modules are installed.
+
+        To enable:
+          1. Confirm the anchor exists on your instance (see README).
+          2. Activate this view: Settings > Technical > Views >
+             "Portal: Task Log Time Button" > set Active.
+
+        If the xpath below does not match, change the expr to an element
+        that does exist in project.portal_my_task on your build, then
+        activate. Nothing else in the module depends on this view.
+    -->
+    <template id="jiv_portal_task_log_time_button"
+              inherit_id="project.portal_my_task"
+              name="Portal: Task Log Time Button"
+              active="False">
+        <xpath expr="//t[@t-call='portal.portal_back_in_edit_mode']"
+               position="after">
+            <t t-set="jiv_can_log"
+               t-value="task.project_id.sudo()._jiv_portal_timesheet_enabled()"/>
+            <div t-if="jiv_can_log" class="mt-2 mb-3">
+                <a t-attf-href="/my/task/#{task.id}/timesheets?#{keep_query()}"
+                   class="btn btn-sm btn-primary">
+                    <i class="fa fa-clock-o me-1"/>Log Time
+                </a>
+            </div>
+        </xpath>
+    </template>
+
+</odoo>

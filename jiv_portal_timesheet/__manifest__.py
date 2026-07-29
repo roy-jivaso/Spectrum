@@ -1,6 +1,6 @@
 {
     'name': 'Portal Timesheet Entry',
-    'version': '17.0.1.0.0',
+    'version': '19.0.1.0.0',
     'summary': 'Allow portal collaborators to log timesheets on shared project tasks',
     'description': """
 Portal Timesheet Entry
@@ -27,7 +27,8 @@ Key points
         'security/portal_timesheet_rules.xml',
         'views/res_config_settings_views.xml',
         'views/hr_timesheet_views.xml',
-        'views/portal_templates.xml',
+        'views/portal_timesheet_page.xml',
+        'views/portal_templates_inline.xml',
     ],
     'assets': {
         'web.assets_frontend': [
