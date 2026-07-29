@@ -30,9 +30,14 @@ class JivPortalTimesheet(CustomerPortal):
             raise AccessError(_(
                 'Time logging is not enabled for this project.'))
         # Read access alone is not enough: the collaborator needs Edit.
+        # Odoo 18 merged check_access_rights/check_access_rule into
+        # check_access; fall back for older builds.
         try:
-            task.check_access_rights('write')
-            task.check_access_rule('write')
+            if hasattr(task, 'check_access'):
+                task.with_user(request.env.user).check_access('write')
+            else:  # pragma: no cover - Odoo <= 17
+                task.with_user(request.env.user).check_access_rights('write')
+                task.with_user(request.env.user).check_access_rule('write')
         except AccessError:
             raise AccessError(_(
                 'You have read-only access to this task and cannot log '
@@ -140,11 +145,20 @@ class JivPortalTimesheet(CustomerPortal):
         except (UserError, ValidationError, AccessError) as exc:
             request.session['jiv_ts_error'] = str(exc)
             return self._jiv_redirect(task_sudo, access_token, error='1')
-        except Exception:
+        except Exception as exc:
             _logger.exception(
                 'Portal timesheet creation failed for task %s', task_id)
-            request.session['jiv_ts_error'] = _(
-                'The entry could not be saved. Please try again.')
+            # Show the real cause when the server is in debug/dev mode,
+            # otherwise a generic message. Silently swallowing this made
+            # configuration errors impossible to diagnose.
+            if request.env['ir.config_parameter'].sudo().get_param(
+                    'jiv_portal_timesheet.verbose_errors'):
+                request.session['jiv_ts_error'] = '%s: %s' % (
+                    type(exc).__name__, exc)
+            else:
+                request.session['jiv_ts_error'] = _(
+                    'The entry could not be saved. Please contact the '
+                    'project manager.')
             return self._jiv_redirect(task_sudo, access_token, error='1')
 
         return self._jiv_redirect(task_sudo, access_token, success='1')
@@ -157,8 +171,11 @@ class JivPortalTimesheet(CustomerPortal):
     def jiv_portal_timesheet_edit(self, line_id, access_token=None, **post):
         line = request.env['account.analytic.line'].browse(int(line_id))
         try:
-            line.check_access_rights('write')
-            line.check_access_rule('write')
+            if hasattr(line, 'check_access'):
+                line.check_access('write')
+            else:  # pragma: no cover - Odoo <= 17
+                line.check_access_rights('write')
+                line.check_access_rule('write')
             task_sudo = self._jiv_get_task(line.task_id.id, access_token)
             self._jiv_ensure_can_log(task_sudo)
             line.write({
