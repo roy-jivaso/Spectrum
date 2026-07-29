@@ -72,9 +72,13 @@ class AccountAnalyticLine(models.Model):
                     vals['name'] = '/'
             # The employee and project links are not writable by portal
             # users, so the insert itself has to run elevated. Access was
-            # already checked against the task above.
-            return super(AccountAnalyticLine,
-                         self.sudo()).create(vals_list).with_env(self.env)
+            # already checked against the task above. The context flag
+            # lets hr_timesheet's post-create recompute write its own
+            # fields without tripping the whitelist in write().
+            return super(
+                AccountAnalyticLine,
+                self.sudo().with_context(jiv_skip_portal_field_check=True),
+            ).create(vals_list).with_env(self.env)
         return super().create(vals_list)
 
     # ------------------------------------------------------------------
@@ -137,7 +141,13 @@ class AccountAnalyticLine(models.Model):
                     'longer be changed.'))
 
     def write(self, vals):
-        if self.env.user._is_portal():
+        # hr_timesheet._timesheet_postprocess() writes computed fields
+        # (amount, cost, so_line...) straight after create, in whatever
+        # environment created the line. For a portal user that tripped
+        # the whitelist below and rolled back the whole save, so the
+        # check is skipped for internal bookkeeping.
+        if self.env.user._is_portal() and not self.env.context.get(
+                'jiv_skip_portal_field_check'):
             self._jiv_check_portal_editable()
             allowed = {'name', 'date', 'unit_amount'}
             forbidden = set(vals) - allowed
