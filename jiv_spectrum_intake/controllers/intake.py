@@ -20,7 +20,7 @@ class IntakeFormController(http.Controller):
         # Pre-fill what we already know
         prefill = {
             'name': lead.partner_id.name or lead.partner_name or lead.contact_name or '',
-            'phone': lead.phone or lead.partner_id.mobile or '',
+            'phone': lead.phone or '',
             'email': lead.partner_id.email or lead.email_from or '',
         }
 
