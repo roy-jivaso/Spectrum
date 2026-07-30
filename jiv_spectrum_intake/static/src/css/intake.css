@@ -1,28 +1,6 @@
-.o_intake_page {
-    background: #f8f8f6;
-    min-height: 100vh;
-}
-
 .o_intake_section {
-    color: #095358;
     font-weight: 700;
-    border-bottom: 2px solid #095358;
+    border-bottom: 1px solid #dee2e6;
     padding-bottom: 6px;
-    margin-top: 32px;
     margin-bottom: 16px;
-}
-
-.o_intake_submit_btn {
-    background-color: #095358;
-    color: #ffffff;
-    padding: 14px 48px;
-    font-size: 16px;
-    border-radius: 6px;
-    border: none;
-    transition: background 0.2s;
-}
-
-.o_intake_submit_btn:hover {
-    background-color: #0a7a82;
-    color: #ffffff;
 }

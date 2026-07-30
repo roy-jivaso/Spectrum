@@ -8,16 +8,13 @@
     <t t-call="website.layout">
         <t t-set="title">Client Intake Form — Spectrum Home &amp; Family Care</t>
         <div class="o_intake_page">
-            <!-- Header -->
-            <div style="background-color:#095358; padding:32px; text-align:center;">
-                <h1 style="color:#ffffff; margin:0; font-size:26px;">Spectrum Home &amp; Family Care</h1>
-                <p style="color:#EBE8DE; margin:8px 0 0 0; font-size:15px;">Client Intake Form</p>
-            </div>
 
             <div class="container" style="max-width:760px; padding:32px 16px 64px;">
+                <h2 class="mb-1">Client Intake Form</h2>
                 <p class="text-muted mb-4">
-                    Thank you for reaching out. Please complete the information below so we can
-                    understand your needs and match you with the right caregiver.
+                    Thank you for reaching out to Spectrum Home &amp; Family Care.
+                    Please complete the information below so we can understand your needs
+                    and match you with the right caregiver.
                     This form takes about 5 minutes — one of our team members will follow up shortly.
                 </p>
 
@@ -268,7 +265,7 @@
                     </p>
 
                     <div class="mt-4 text-center">
-                        <button type="submit" class="btn btn-lg o_intake_submit_btn">
+                        <button type="submit" class="btn btn-primary btn-lg">
                             Submit Intake Form
                         </button>
                     </div>
@@ -285,8 +282,8 @@
     <t t-call="website.layout">
         <t t-set="title">Thank You — Spectrum Home &amp; Family Care</t>
         <div class="container text-center" style="max-width:560px; padding:80px 16px;">
-            <div style="font-size:56px; color:#095358;">✓</div>
-            <h2 style="color:#095358; margin-top:16px;">Thank You!</h2>
+            <i class="fa fa-check-circle fa-5x text-success mb-3"/>
+            <h2>Thank You!</h2>
             <p class="lead mt-3">
                 Your intake form has been received. One of our team members
                 will be in touch shortly to discuss next steps.
@@ -303,7 +300,7 @@
     <t t-call="website.layout">
         <t t-set="title">Invalid Link — Spectrum Home &amp; Family Care</t>
         <div class="container text-center" style="max-width:560px; padding:80px 16px;">
-            <div style="font-size:56px; color:#999;">✗</div>
+            <i class="fa fa-times-circle fa-5x text-danger mb-3"/>
             <h2 class="mt-3">Link Not Found</h2>
             <p class="text-muted">
                 This intake form link is invalid or has expired.
@@ -320,8 +317,8 @@
     <t t-call="website.layout">
         <t t-set="title">Already Submitted — Spectrum Home &amp; Family Care</t>
         <div class="container text-center" style="max-width:560px; padding:80px 16px;">
-            <div style="font-size:56px; color:#095358;">✓</div>
-            <h2 style="color:#095358; margin-top:16px;">Already Received</h2>
+            <i class="fa fa-check-circle fa-5x text-success mb-3"/>
+            <h2>Already Received</h2>
             <p class="lead mt-3">
                 We already have your intake form on file. Our team will be in touch soon.
             </p>
