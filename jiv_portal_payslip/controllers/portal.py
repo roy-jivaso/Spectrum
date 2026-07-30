@@ -117,21 +117,34 @@ class JivPortalPayslip(CustomerPortal):
             report_ref=report_ref, download=download)
 
     def _jiv_payslip_report_ref(self):
-        """The payslip PDF report, if one exists.
+        """The payslip PDF report_name, if one exists.
 
-        The report's xml id has moved between payroll versions and
-        localisations, so try the known names and fall back to searching
-        by model rather than hard-failing.
+        _show_report wants the report_name ('hr_payroll.report_payslip_lang'),
+        NOT the action's xml id ('hr_payroll.action_report_payslip').
+        Passing the action id produces a 500.
+
+        Resolve through the record so both come from the same place, and
+        prefer the localisation-specific report when the company has one -
+        several may be installed at once (AU, US and generic all exist on
+        some databases).
         """
-        for xid in ('hr_payroll.action_report_payslip',
-                    'hr_payroll.payslip_report',
-                    'om_hr_payroll.action_report_payslip'):
-            if request.env.ref(xid, raise_if_not_found=False):
-                return xid
-        report = request.env['ir.actions.report'].sudo().search(
+        Report = request.env['ir.actions.report'].sudo()
+        country = request.env.company.country_id.code or ''
+
+        preferred = [
+            'l10n_%s_hr_payroll.action_report_payslip_%s' % (
+                country.lower(), country.lower()),
+            'hr_payroll.action_report_payslip',
+        ]
+        for xid in preferred:
+            action = request.env.ref(xid, raise_if_not_found=False)
+            if action and action.report_name:
+                return action.report_name
+
+        report = Report.search(
             [('model', '=', 'hr.payslip'), ('report_type', '=', 'qweb-pdf')],
             limit=1)
         if report:
             return report.report_name
-        _logger.warning('No hr.payslip PDF report found; hiding download')
+        _logger.warning('No hr.payslip PDF report found; download disabled')
         return None
