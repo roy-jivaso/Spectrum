@@ -30,7 +30,13 @@
                 <t t-set="title">Attendances</t>
                 <t t-set="url" t-value="'/my/attendances'"/>
                 <t t-set="text">Check in, check out and review your hours</t>
-                <t t-set="placeholder_count" t-value="'attendance_count'"/>
+                <!--
+                    No placeholder_count on purpose. portal_docs_entry
+                    hides the card when the counter is 0, which is exactly
+                    the state a user is in before their first check-in -
+                    so the card would only appear once they had somehow
+                    already used it.
+                -->
             </t>
         </div>
     </template>
