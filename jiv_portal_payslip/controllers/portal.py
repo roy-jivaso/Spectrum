@@ -141,13 +141,13 @@ class JivPortalPayslip(CustomerPortal):
         NOT the action's xml id ('hr_payroll.action_report_payslip').
         Passing the action id produces a 500.
 
-        Resolve through the record so both come from the same place, and
-        prefer the localisation-specific report when the company has one -
-        several may be installed at once (AU, US and generic all exist on
-        some databases).
+        Every lookup here is sudo'd: env.ref() reads ir.actions.report,
+        which base.group_portal cannot read, so an unsudo'd ref() raises
+        a 403 before the render is ever reached. Entitlement to the
+        payslip itself was already established by the caller.
         """
         Report = request.env['ir.actions.report'].sudo()
-        country = request.env.company.country_id.code or ''
+        country = (request.env.company.sudo().country_id.code or '')
 
         preferred = [
             'l10n_%s_hr_payroll.action_report_payslip_%s' % (
@@ -156,6 +156,7 @@ class JivPortalPayslip(CustomerPortal):
         ]
         for xid in preferred:
             action = request.env.ref(xid, raise_if_not_found=False)
+            action = action.sudo() if action else action
             if action and action.report_name:
                 return action.report_name
 
