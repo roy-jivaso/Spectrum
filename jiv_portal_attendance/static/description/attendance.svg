@@ -1,7 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <rect x="8" y="12" width="48" height="44" rx="5" fill="#EBE8DE" stroke="#095358" stroke-width="3"/>
-  <path d="M8 24h48" stroke="#095358" stroke-width="3"/>
-  <path d="M20 6v10M44 6v10" stroke="#095358" stroke-width="3" stroke-linecap="round"/>
-  <path d="M20 40l7 7 14-14" fill="none" stroke="#095358" stroke-width="4"
-        stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64"
+     fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <!--
+      Matches the Odoo portal card icon style: pale blue line art with a
+      single soft pink accent, thin strokes, no fills other than white.
+  -->
+  <rect x="7" y="13" width="50" height="44" rx="6"
+        fill="#ffffff" stroke="#a8bdd9" stroke-width="2.5"/>
+  <path d="M7 26h50" stroke="#a8bdd9" stroke-width="2.5"/>
+  <path d="M19 7v10M45 7v10" stroke="#a8bdd9" stroke-width="2.5"/>
+  <path d="M21 41.5l7.5 7.5L44 34" stroke="#e8a9b8" stroke-width="3.5"/>
 </svg>
