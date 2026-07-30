@@ -208,5 +208,20 @@
             </t>
         </t>
     </template>
+<template id="jiv_portal_my_home_task_label"
+              inherit_id="project.portal_my_home"
+              name="Portal Home: Rename Tasks Card"
+              priority="90">
 
+        <xpath expr="//t[@t-call='portal.portal_docs_entry'][t[@t-value=&quot;'/my/tasks'&quot;]]/t[@t-set='title']"
+               position="replace">
+            <t t-set="title">Progress Updates</t>
+        </xpath>
+
+        <xpath expr="//t[@t-call='portal.portal_docs_entry'][t[@t-value=&quot;'/my/tasks'&quot;]]/t[@t-set='text']"
+               position="replace">
+            <t t-set="text">Follow and comment on progress updates in your projects</t>
+        </xpath>
+
+    </template>
 </odoo>
