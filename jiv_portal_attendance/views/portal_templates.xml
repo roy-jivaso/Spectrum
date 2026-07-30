@@ -31,12 +31,19 @@
                 <t t-set="url" t-value="'/my/attendances'"/>
                 <t t-set="text">Check in, check out and review your hours</t>
                 <!--
-                    No placeholder_count on purpose. portal_docs_entry
-                    hides the card when the counter is 0, which is exactly
-                    the state a user is in before their first check-in -
-                    so the card would only appear once they had somehow
-                    already used it.
+                    config_card, not placeholder_count.
+
+                    portal_docs_entry renders nothing unless it gets one
+                    of the two: with placeholder_count the card is hidden
+                    while the counter is 0 (which is exactly a new user's
+                    state, so the card would only appear after they had
+                    somehow already checked in), and with neither it is
+                    hidden unconditionally.
+
+                    config_card="True" is how Addresses and Connection &
+                    Security stay visible for users with no records.
                 -->
+                <t t-set="config_card" t-value="True"/>
             </t>
         </div>
     </template>
