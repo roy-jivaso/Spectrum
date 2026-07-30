@@ -108,13 +108,31 @@ class JivPortalPayslip(CustomerPortal):
         except (AccessError, MissingError):
             return request.redirect('/my')
 
-        report_ref = self._jiv_payslip_report_ref()
-        if not report_ref:
+        report_name = self._jiv_payslip_report_ref()
+        if not report_name:
             return request.redirect('/my/payslip/%s' % payslip_id)
 
-        return self._show_report(
-            model=slip_sudo, report_type='pdf',
-            report_ref=report_ref, download=download)
+        # Render with sudo rather than going through _show_report:
+        # ir.actions.report is not readable by base.group_portal, so the
+        # portal user gets a 403 on the report lookup itself even though
+        # they are entitled to this payslip. Access to the record was
+        # already established by _jiv_get_payslip above.
+        try:
+            pdf, _content_type = request.env['ir.actions.report'].sudo() \
+                ._render_qweb_pdf(report_name, res_ids=slip_sudo.ids)
+        except Exception:
+            _logger.exception(
+                'Payslip PDF rendering failed for payslip %s', payslip_id)
+            return request.redirect('/my/payslip/%s' % payslip_id)
+
+        filename = '%s.pdf' % (slip_sudo.name or 'payslip').replace('/', '-')
+        disposition = 'attachment' if download else 'inline'
+        return request.make_response(pdf, headers=[
+            ('Content-Type', 'application/pdf'),
+            ('Content-Length', len(pdf)),
+            ('Content-Disposition',
+             '%s; filename="%s"' % (disposition, filename)),
+        ])
 
     def _jiv_payslip_report_ref(self):
         """The payslip PDF report_name, if one exists.
