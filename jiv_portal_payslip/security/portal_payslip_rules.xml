@@ -5,6 +5,10 @@
         Read-only, own records, confirmed only. The state filter lives in
         the rule as well as the controller: without it, anyone who
         obtained an id could read a draft slip via RPC.
+
+        'validated' is the Odoo 19 name for what earlier versions called
+        'done'. Both are listed so this rule works either way - a state
+        that does not exist simply never matches.
     -->
     <record id="jiv_payslip_portal_rule" model="ir.rule">
         <field name="name">Portal: own confirmed payslips</field>
@@ -16,7 +20,7 @@
         <field name="perm_unlink" eval="False"/>
         <field name="domain_force">
             ['&amp;', ('employee_id.user_id', '=', user.id),
-                      ('state', 'in', ['done', 'paid'])]
+                      ('state', 'in', ['validated', 'done', 'paid'])]
         </field>
     </record>
 
@@ -30,7 +34,7 @@
         <field name="perm_unlink" eval="False"/>
         <field name="domain_force">
             ['&amp;', ('slip_id.employee_id.user_id', '=', user.id),
-                      ('slip_id.state', 'in', ['done', 'paid'])]
+                      ('slip_id.state', 'in', ['validated', 'done', 'paid'])]
         </field>
     </record>
 

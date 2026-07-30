@@ -36,7 +36,7 @@
                 <t t-else="">Payslips</t>
             </li>
             <li t-if="payslip" class="breadcrumb-item active">
-                <t t-out="payslip.number or payslip.name"/>
+                <t t-out="payslip.name"/>
             </li>
         </xpath>
     </template>
@@ -72,7 +72,7 @@
                         <tr t-foreach="payslips" t-as="slip">
                             <td>
                                 <a t-attf-href="/my/payslip/#{slip.id}"
-                                   t-out="slip.number or slip.name"/>
+                                   t-out="slip.name"/>
                             </td>
                             <td>
                                 <span t-field="slip.date_from"/>
@@ -83,7 +83,7 @@
                                 <span t-if="slip.state == 'paid'"
                                       class="badge text-bg-success">Paid</span>
                                 <span t-else=""
-                                      class="badge text-bg-secondary">Confirmed</span>
+                                      class="badge text-bg-secondary">Validated</span>
                             </td>
                             <td class="text-end">
                                 <span t-out="slip.net_wage"
@@ -110,8 +110,7 @@
 
             <div class="row mt-3 mb-3">
                 <div class="col-md-8">
-                    <h4 class="mb-0"
-                        t-out="payslip.number or payslip.name"/>
+                    <h4 class="mb-0" t-out="payslip.name"/>
                     <a href="/my/payslips" class="small">
                         <i class="fa fa-angle-left me-1"/>Back to payslips
                     </a>
@@ -144,7 +143,7 @@
                             <span t-if="payslip.state == 'paid'"
                                   class="badge text-bg-success">Paid</span>
                             <span t-else=""
-                                  class="badge text-bg-secondary">Confirmed</span>
+                                  class="badge text-bg-secondary">Validated</span>
                         </div>
                     </div>
                 </div>

@@ -25,7 +25,7 @@ class JivPortalPayslip(CustomerPortal):
     def _jiv_searchbar_sortings(self):
         return {
             'date': {'label': _('Period'), 'order': 'date_from desc'},
-            'name': {'label': _('Reference'), 'order': 'number desc'},
+            'name': {'label': _('Reference'), 'order': 'name desc'},
             'state': {'label': _('Status'), 'order': 'state'},
         }
 
@@ -43,8 +43,7 @@ class JivPortalPayslip(CustomerPortal):
             sortby = 'date'
 
         if search:
-            domain += ['|', ('number', 'ilike', search),
-                       ('name', 'ilike', search)]
+            domain += [('name', 'ilike', search)]
 
         total = Payslip.sudo().search_count(domain)
         page_detail = pager(
