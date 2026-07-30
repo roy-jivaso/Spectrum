@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- "Attendances" card on My Account -->
+    <!--
+        "Attendances" card on My Account.
+
+        The cards do NOT sit directly under .o_portal_docs - that div only
+        holds the category containers. Targeting it puts the card outside
+        every category and it renders nowhere. The card must go inside a
+        specific category div, and that category's *_enable flag must be
+        set or the whole container is hidden by its t-if.
+    -->
     <template id="portal_my_home_attendance" name="Portal My Home: Attendance"
               inherit_id="portal.portal_my_home" priority="40">
-        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+        <xpath expr="//div[@id='portal_service_category']" position="inside">
             <t t-call="portal.portal_docs_entry"
                t-if="request.env.user._jiv_can_use_portal_attendance()">
                 <t t-set="icon" t-value="'/jiv_portal_attendance/static/description/attendance.svg'"/>

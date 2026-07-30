@@ -18,6 +18,13 @@ class JivPortalAttendance(CustomerPortal):
     # ------------------------------------------------------------------
     # My Account counter
     # ------------------------------------------------------------------
+    def _prepare_portal_layout_values(self):
+        values = super()._prepare_portal_layout_values()
+        # portal_service_category is wrapped in t-if="portal_service_category_enable";
+        # without this the container - and our card inside it - is hidden.
+        values['portal_service_category_enable'] = True
+        return values
+
     def _prepare_home_portal_values(self, counters):
         values = super()._prepare_home_portal_values(counters)
         if 'attendance_count' in counters and \
