@@ -23,8 +23,7 @@ Notes
 * hr.attendance requires an hr.employee; one can be auto-provisioned
   (see Settings > Technical > System Parameters).
 """,
-    'author': 'Zyvi Technologies',
-    'website': 'https://www.zyvitech.com',
+
     'category': 'Human Resources/Attendances',
     'license': 'LGPL-3',
     'depends': ['hr_attendance', 'portal'],

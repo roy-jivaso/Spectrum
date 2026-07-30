@@ -19,8 +19,10 @@
             Please take a few minutes to complete our intake form so we can
             understand your needs and match you with the right caregiver.
         </p>
+        {% set base_url = env['ir.config_parameter'].sudo().get_param('web.base.url') %}
+        {% set intake_url = base_url + '/intake/' + (object.x_intake_token or '') %}
         <div style="text-align: center; margin: 32px 0;">
-            <a href="{{ '%s/intake/%s' % (env['ir.config_parameter'].sudo().get_param('web.base.url'), object.x_intake_token) }}"
+            <a href="{{ intake_url }}"
                style="background-color: #095358; color: #ffffff; padding: 14px 32px;
                       border-radius: 6px; text-decoration: none; font-size: 16px;
                       font-weight: bold; display: inline-block;">

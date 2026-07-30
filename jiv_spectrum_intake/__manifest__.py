@@ -3,7 +3,7 @@
     'version': '19.0.1.0.0',
     'summary': 'Send intake form link to prospects; capture submissions into CRM leads',
     'category': 'CRM',
-    'author': 'Zyvi Technologies',
+
     'depends': ['crm', 'website', 'mail'],
     'data': [
         'security/ir.model.access.csv',

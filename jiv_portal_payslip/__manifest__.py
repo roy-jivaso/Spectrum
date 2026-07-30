@@ -18,8 +18,7 @@ Draft and computed-but-unconfirmed slips are hidden, because figures
 still change at that stage and showing them to employees causes
 avoidable disputes. Configurable if you disagree - see the README.
 """,
-    'author': 'Zyvi Technologies',
-    'website': 'https://www.zyvitech.com',
+
     'category': 'Human Resources/Payroll',
     'license': 'LGPL-3',
     'depends': ['hr_payroll', 'portal'],
