@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="crm_lead_view_form_intake_button" model="ir.ui.view">
+        <field name="name">crm.lead.form.intake.button</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <data>
+                <!-- Button in the top statusbar area, visible on opportunities only -->
+                <xpath expr="/form/header" position="inside">
+                    <button name="action_send_intake_form"
+                            string="Send Intake Form"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="type != 'opportunity'"
+                            icon="fa-paper-plane"/>
+                </xpath>
+
+                <!-- Intake status badge next to the button -->
+                <xpath expr="/form/header/button[@name='action_send_intake_form']" position="after">
+                    <field name="x_intake_submitted"
+                           invisible="type != 'opportunity' or not x_intake_submitted"
+                           widget="boolean_favorite"
+                           options="{'terminology': 'archive'}"
+                           nolabel="1"/>
+                    <span invisible="type != 'opportunity' or not x_intake_submitted"
+                          class="badge text-bg-success ms-1">
+                        Intake Received
+                    </span>
+                    <span invisible="type != 'opportunity' or x_intake_submitted"
+                          class="badge text-bg-warning ms-1">
+                        Intake Pending
+                    </span>
+                </xpath>
+
+                <!-- Intake meta fields at the bottom of the form (invisible, used for chatter context) -->
+                <xpath expr="/form//field[@name='message_bounce']" position="before">
+                    <field name="x_intake_token" invisible="1"/>
+                    <field name="x_intake_submitted_date" invisible="1"/>
+                </xpath>
+            </data>
+        </field>
+    </record>
+</odoo>
