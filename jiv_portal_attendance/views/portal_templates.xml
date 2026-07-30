@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
-    <!--
+  <!--
         "Attendances" card on My Account.
 
         Two things learned the hard way here:
@@ -185,7 +184,8 @@
                     <tbody>
                         <tr t-foreach="attendances" t-as="att">
                             <td t-if="needs_recipient">
-                                <span t-out="att[recipient_field].display_name if att[recipient_field] else ''"/>
+                                <a t-attf-href="/my/attendance/#{att.id}"
+                                   t-out="att[recipient_field].display_name if att[recipient_field] else 'View'"/>
                             </td>
                             <td>
                                 <span t-field="att.check_in"
@@ -208,7 +208,67 @@
             </t>
         </t>
     </template>
-<template id="jiv_portal_my_home_task_label"
+
+    <!-- Attendance detail page with chatter -->
+    <template id="portal_attendance_detail" name="Attendance Detail">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+
+            <div class="row mt-3 mb-3">
+                <div class="col-12">
+                    <h4 class="mb-0">Attendance</h4>
+                    <a href="/my/attendances" class="small">
+                        <i class="fa fa-angle-left me-1"/>Back to list
+                    </a>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div t-if="needs_recipient" class="col-md-6 mb-3">
+                            <div class="text-muted small">Client / Care Recipient</div>
+                            <div t-out="attendance[recipient_field].display_name
+                                        if attendance[recipient_field] else '-'"/>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="text-muted small">Employee</div>
+                            <div t-out="attendance.employee_id.name"/>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="text-muted small">Check In</div>
+                            <div><span t-field="attendance.check_in"
+                                       t-options='{"widget": "datetime"}'/></div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="text-muted small">Check Out</div>
+                            <div>
+                                <span t-if="attendance.check_out"
+                                      t-field="attendance.check_out"
+                                      t-options='{"widget": "datetime"}'/>
+                                <span t-else="" class="badge text-bg-success">
+                                    Running
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-muted small">Worked Time</div>
+                            <div><span t-field="attendance.worked_hours"
+                                       t-options='{"widget": "float_time"}'/></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h5 class="mb-3">Communication history</h5>
+            <t t-call="portal.message_thread">
+                <t t-set="object" t-value="attendance"/>
+                <t t-set="token" t-value="access_token"/>
+            </t>
+        </t>
+    </template>
+
+  <template id="jiv_portal_my_home_task_label"
               inherit_id="project.portal_my_home"
               name="Portal Home: Rename Tasks Card"
               priority="90">
@@ -221,6 +281,33 @@
         <xpath expr="//t[@t-call='portal.portal_docs_entry'][t[@t-value=&quot;'/my/tasks'&quot;]]/t[@t-set='text']"
                position="replace">
             <t t-set="text">Follow and comment on progress updates in your projects</t>
+        </xpath>
+
+    </template>
+
+    <!--
+        Renames the "Tasks" breadcrumb entry on portal task pages.
+
+        Defined in project.portal_layout, which inherits
+        portal.portal_breadcrumbs. The <li> is matched by its child
+        anchor's href rather than by its t-if condition, because that
+        condition is a long expression full of quotes and any future
+        wording change upstream would silently stop the match.
+    -->
+    <template id="jiv_portal_breadcrumb_task_label"
+              inherit_id="project.portal_layout"
+              name="Portal Breadcrumb: Rename Tasks"
+              priority="90">
+
+        <xpath expr="//li[a[@t-attf-href='/my/tasks?{{ keep_query() }}']]"
+               position="replace">
+            <li t-if="page_name == 'task' or (task and not project)"
+                t-attf-class="breadcrumb-item #{'active ' if not task else ''}">
+                <a t-if="task" t-attf-href="/my/tasks?{{ keep_query() }}">
+                    Progress Updates
+                </a>
+                <t t-else="">Progress Updates</t>
+            </li>
         </xpath>
 
     </template>
