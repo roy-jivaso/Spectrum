@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!--
+            Which payslip states employees may see.
+            Empty = ['done', 'paid'] (confirmed only).
+
+            If you widen this to include 'draft' or 'verify', change the
+            record rules in security/portal_payslip_rules.xml to match -
+            the rule is the real boundary, this parameter only affects
+            the controller.
+        -->
+        <record id="jiv_param_visible_states" model="ir.config_parameter">
+            <field name="key">jiv_portal_payslip.visible_states</field>
+            <field name="value"></field>
+        </record>
+
+    </data>
+</odoo>

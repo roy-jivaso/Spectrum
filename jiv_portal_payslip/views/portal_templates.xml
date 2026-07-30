@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        "Payslips" card on My Account.
+
+        config_card rather than placeholder_count: a new employee with no
+        confirmed payslip yet would otherwise never see the card, and
+        would have no way to know the feature exists.
+    -->
+    <template id="portal_my_home_payslip" name="Portal My Home: Payslips"
+              inherit_id="portal.portal_my_home" priority="47">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
+            <t t-set="portal_service_category_enable" t-value="True"/>
+        </xpath>
+        <div id="portal_service_category" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="icon" t-value="'/jiv_portal_payslip/static/description/payslip.svg'"/>
+                <t t-set="title">Payslips</t>
+                <t t-set="url" t-value="'/my/payslips'"/>
+                <t t-set="text">View and download your payslips</t>
+                <t t-set="config_card" t-value="True"/>
+            </t>
+        </div>
+    </template>
+
+    <!-- Breadcrumb -->
+    <template id="portal_breadcrumbs_payslip"
+              inherit_id="portal.portal_breadcrumbs" priority="47">
+        <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
+            <li t-if="page_name == 'payslip'"
+                t-attf-class="breadcrumb-item #{'active ' if not payslip else ''}">
+                <a t-if="payslip" t-attf-href="/my/payslips?#{keep_query()}">
+                    Payslips
+                </a>
+                <t t-else="">Payslips</t>
+            </li>
+            <li t-if="payslip" class="breadcrumb-item active">
+                <t t-out="payslip.number or payslip.name"/>
+            </li>
+        </xpath>
+    </template>
+
+    <!-- List -->
+    <template id="portal_my_payslips" name="My Payslips">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Payslips</t>
+            </t>
+
+            <t t-if="not payslips">
+                <div class="alert alert-info">
+                    You have no payslips available yet. Payslips appear
+                    here once payroll has confirmed them.
+                </div>
+            </t>
+
+            <t t-else="">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Period</th>
+                            <th>Status</th>
+                            <th class="text-end">Net</th>
+                            <th/>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="payslips" t-as="slip">
+                            <td>
+                                <a t-attf-href="/my/payslip/#{slip.id}"
+                                   t-out="slip.number or slip.name"/>
+                            </td>
+                            <td>
+                                <span t-field="slip.date_from"/>
+                                &amp;mdash;
+                                <span t-field="slip.date_to"/>
+                            </td>
+                            <td>
+                                <span t-if="slip.state == 'paid'"
+                                      class="badge text-bg-success">Paid</span>
+                                <span t-else=""
+                                      class="badge text-bg-secondary">Confirmed</span>
+                            </td>
+                            <td class="text-end">
+                                <span t-out="slip.net_wage"
+                                      t-options='{"widget": "monetary", "display_currency": slip.currency_id}'/>
+                            </td>
+                            <td class="text-end">
+                                <a t-attf-href="/my/payslip/#{slip.id}/pdf?download=true"
+                                   class="btn btn-sm btn-secondary"
+                                   title="Download PDF">
+                                    <i class="fa fa-download"/>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </t>
+        </t>
+    </template>
+
+    <!-- Detail -->
+    <template id="portal_payslip_detail" name="Payslip Detail">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+
+            <div class="row mt-3 mb-3">
+                <div class="col-md-8">
+                    <h4 class="mb-0"
+                        t-out="payslip.number or payslip.name"/>
+                    <a href="/my/payslips" class="small">
+                        <i class="fa fa-angle-left me-1"/>Back to payslips
+                    </a>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a t-attf-href="/my/payslip/#{payslip.id}/pdf?download=true"
+                       class="btn btn-primary">
+                        <i class="fa fa-download me-1"/>Download PDF
+                    </a>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body row">
+                    <div class="col-md-4 mb-3">
+                        <div class="text-muted small">Employee</div>
+                        <div t-out="payslip.employee_id.name"/>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="text-muted small">Period</div>
+                        <div>
+                            <span t-field="payslip.date_from"/>
+                            &amp;mdash;
+                            <span t-field="payslip.date_to"/>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="text-muted small">Status</div>
+                        <div>
+                            <span t-if="payslip.state == 'paid'"
+                                  class="badge text-bg-success">Paid</span>
+                            <span t-else=""
+                                  class="badge text-bg-secondary">Confirmed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <t t-set="visible_lines"
+               t-value="payslip.line_ids.filtered(lambda l: l.appears_on_payslip)
+                        if 'appears_on_payslip' in payslip.line_ids._fields
+                        else payslip.line_ids"/>
+
+            <table t-if="visible_lines" class="table">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th class="text-end">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="visible_lines" t-as="line">
+                        <td t-out="line.name"/>
+                        <td class="text-end">
+                            <span t-out="line.total"
+                                  t-options='{"widget": "monetary", "display_currency": payslip.currency_id}'/>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p class="text-muted small">
+                If anything here looks wrong, please contact payroll
+                rather than replying to this page.
+            </p>
+        </t>
+    </template>
+
+</odoo>
