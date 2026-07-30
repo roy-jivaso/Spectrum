@@ -5,7 +5,7 @@ import pytz
 from dateutil.relativedelta import relativedelta
 
 from odoo import _, fields, http
-from odoo.exceptions import AccessError, UserError
+from odoo.exceptions import AccessError, MissingError, UserError
 from odoo.http import request
 
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager
@@ -183,6 +183,30 @@ class JivPortalAttendance(CustomerPortal):
             'notify_type': request.params.get('notify'),
             'notify_message': request.session.pop('jiv_att_message', None),
         })
+
+    # ------------------------------------------------------------------
+    # Detail
+    # ------------------------------------------------------------------
+    @http.route(['/my/attendance/<int:attendance_id>'], type='http',
+                auth='public', website=True)
+    def jiv_portal_attendance_detail(self, attendance_id, access_token=None,
+                                     **kw):
+        try:
+            attendance_sudo = self._document_check_access(
+                'hr.attendance', attendance_id, access_token)
+        except (AccessError, MissingError):
+            return request.redirect('/my')
+
+        Att = request.env['hr.attendance']
+        return request.render(
+            'jiv_portal_attendance.portal_attendance_detail', {
+                'attendance': attendance_sudo,
+                'page_name': 'attendance',
+                'needs_recipient': Att._jiv_has_recipient_field(),
+                'recipient_field': Att.JIV_RECIPIENT_FIELD,
+                'access_token': access_token,
+                'token': access_token,
+            })
 
     # ------------------------------------------------------------------
     # Create
