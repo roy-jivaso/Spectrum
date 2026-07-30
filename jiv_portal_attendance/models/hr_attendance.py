@@ -1,5 +1,10 @@
+import logging
+from ast import literal_eval
+
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError
+
+_logger = logging.getLogger(__name__)
 
 
 class HrAttendance(models.Model):
@@ -60,8 +65,38 @@ class HrAttendance(models.Model):
             ('check_out', '=', False),
         ], order='check_in desc', limit=1)
 
+    # Studio field on hr.attendance linking the shift to a client.
+    # Guarded everywhere: the module must still work on databases where
+    # this field was never created.
+    JIV_RECIPIENT_FIELD = 'x_studio_client_care_recipient'
+
     @api.model
-    def jiv_portal_check_in(self):
+    def _jiv_has_recipient_field(self):
+        return self.JIV_RECIPIENT_FIELD in self._fields
+
+    @api.model
+    def _jiv_recipient_options(self):
+        """Partners a portal user may pick as care recipient.
+
+        Domain is configurable because 'who counts as a client' differs
+        per database. Default is customers only - without a domain this
+        would expose every partner in the system to portal users.
+        """
+        if not self._jiv_has_recipient_field():
+            return self.env['res.partner']
+        ICP = self.env['ir.config_parameter'].sudo()
+        raw = ICP.get_param('jiv_portal_attendance.recipient_domain')
+        try:
+            domain = literal_eval(raw) if raw else [('customer_rank', '>', 0)]
+        except (ValueError, SyntaxError):
+            _logger.warning(
+                'Invalid jiv_portal_attendance.recipient_domain, '
+                'falling back to customers only')
+            domain = [('customer_rank', '>', 0)]
+        return self.env['res.partner'].sudo().search(domain, order='name')
+
+    @api.model
+    def jiv_portal_check_in(self, recipient_id=None):
         """Open a new attendance for the current portal user."""
         if not self.env.user._jiv_can_use_portal_attendance():
             raise AccessError(_(
@@ -70,11 +105,26 @@ class HrAttendance(models.Model):
         if self._jiv_get_open_attendance(employee):
             raise UserError(_(
                 'You are already checked in. Please check out first.'))
-        return self.sudo().create({
+
+        vals = {
             'employee_id': employee.id,
             'check_in': fields.Datetime.now(),
             'jiv_from_portal': True,
-        })
+        }
+
+        if self._jiv_has_recipient_field():
+            if not recipient_id:
+                raise UserError(_(
+                    'Please select a client before checking in.'))
+            # Validate against the allowed list rather than trusting the
+            # posted id - the form is client-side and can be tampered with.
+            allowed = self._jiv_recipient_options()
+            if int(recipient_id) not in allowed.ids:
+                raise AccessError(_(
+                    'That client is not available for selection.'))
+            vals[self.JIV_RECIPIENT_FIELD] = int(recipient_id)
+
+        return self.sudo().create(vals)
 
     @api.model
     def jiv_portal_check_out(self):

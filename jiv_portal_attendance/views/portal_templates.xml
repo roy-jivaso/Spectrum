@@ -74,15 +74,16 @@
             <!-- Check in / out + notification -->
             <div class="jiv-att-bar d-flex align-items-start justify-content-between mb-3">
                 <div>
-                    <form t-if="not is_checked_in"
-                          action="/my/attendances/check_in" method="post"
-                          class="d-inline">
-                        <input type="hidden" name="csrf_token"
-                               t-att-value="request.csrf_token()"/>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fa fa-sign-in me-1"/>Check In
-                        </button>
-                    </form>
+                    <!-- Check In opens a dialog so the client can be
+                         chosen before the record is created; posting
+                         straight from this button would create an
+                         attendance with no recipient. -->
+                    <button t-if="not is_checked_in" type="button"
+                            class="btn btn-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#jivCheckInModal">
+                        <i class="fa fa-sign-in me-1"/>Check In
+                    </button>
 
                     <form t-else="" action="/my/attendances/check_out"
                           method="post" class="d-inline">
@@ -109,6 +110,62 @@
                 </div>
             </div>
 
+            <!-- Check In dialog -->
+            <div class="modal fade" id="jivCheckInModal" tabindex="-1"
+                 aria-labelledby="jivCheckInLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <form action="/my/attendances/check_in" method="post"
+                          class="modal-content">
+                        <input type="hidden" name="csrf_token"
+                               t-att-value="request.csrf_token()"/>
+
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="jivCheckInLabel">
+                                Check In
+                            </h5>
+                            <button type="button" class="btn-close"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Close"/>
+                        </div>
+
+                        <div class="modal-body">
+                            <t t-if="needs_recipient">
+                                <label class="form-label"
+                                       for="jiv_recipient_id">
+                                    Client / Care Recipient
+                                </label>
+                                <select id="jiv_recipient_id"
+                                        name="recipient_id"
+                                        class="form-select"
+                                        required="required">
+                                    <option value="">Select a client...</option>
+                                    <option t-foreach="recipients" t-as="r"
+                                            t-att-value="r.id"
+                                            t-out="r.display_name"/>
+                                </select>
+                                <div t-if="not recipients"
+                                     class="alert alert-warning mt-3 mb-0">
+                                    No clients are available to select.
+                                    Please contact your administrator.
+                                </div>
+                            </t>
+                            <p t-else="" class="mb-0">
+                                Start your shift now?
+                            </p>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary"
+                                    data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary"
+                                    t-att-disabled="'disabled' if (needs_recipient and not recipients) else None">
+                                <i class="fa fa-sign-in me-1"/>Check In
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <t t-if="not attendances">
                 <div class="alert alert-info">
                     No attendance records yet. Use Check In to start.
@@ -119,6 +176,7 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
+                            <th t-if="needs_recipient">Client</th>
                             <th>Check In</th>
                             <th>Check Out</th>
                             <th class="text-end">Duration</th>
@@ -126,6 +184,9 @@
                     </thead>
                     <tbody>
                         <tr t-foreach="attendances" t-as="att">
+                            <td t-if="needs_recipient">
+                                <span t-out="att[recipient_field].display_name if att[recipient_field] else ''"/>
+                            </td>
                             <td>
                                 <span t-field="att.check_in"
                                       t-options='{"widget": "datetime"}'/>
