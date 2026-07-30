@@ -4,24 +4,35 @@
     <!--
         "Attendances" card on My Account.
 
-        The cards do NOT sit directly under .o_portal_docs - that div only
-        holds the category containers. Targeting it puts the card outside
-        every category and it renders nowhere. The card must go inside a
-        specific category div, and that category's *_enable flag must be
-        set or the whole container is hidden by its t-if.
+        Two things learned the hard way here:
+
+        1. Cards do not sit directly under .o_portal_docs - that div only
+           holds category containers. The card must go inside a specific
+           category div.
+        2. The category's *_enable flag is set with a t-set in the
+           template, before .o_portal_docs - NOT from a controller
+           override. This mirrors hr_timesheet.portal_my_home_timesheet.
+
+        The access gate is applied in the controller (route + counter) and
+        in the check-in/check-out methods, not with a t-if here: calling a
+        Python method from a t-if in this template does not evaluate the
+        way it does elsewhere, and a falsy result silently hides the card
+        with no error.
     -->
     <template id="portal_my_home_attendance" name="Portal My Home: Attendance"
-              inherit_id="portal.portal_my_home" priority="40">
-        <xpath expr="//div[@id='portal_service_category']" position="inside">
-            <t t-call="portal.portal_docs_entry"
-               t-if="request.env.user._jiv_can_use_portal_attendance()">
+              inherit_id="portal.portal_my_home" priority="46">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
+            <t t-set="portal_service_category_enable" t-value="True"/>
+        </xpath>
+        <div id="portal_service_category" position="inside">
+            <t t-call="portal.portal_docs_entry">
                 <t t-set="icon" t-value="'/jiv_portal_attendance/static/description/attendance.svg'"/>
                 <t t-set="title">Attendances</t>
-                <t t-set="text">Check in, check out and review your hours</t>
                 <t t-set="url" t-value="'/my/attendances'"/>
+                <t t-set="text">Check in, check out and review your hours</t>
                 <t t-set="placeholder_count" t-value="'attendance_count'"/>
             </t>
-        </xpath>
+        </div>
     </template>
 
     <!-- Breadcrumb -->
