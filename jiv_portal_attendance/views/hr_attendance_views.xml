@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Surface the portal flag so external collaborators can be told
+        apart from staff and filtered out of HR reporting.
+    -->
+    <record id="jiv_hr_attendance_view_filter" model="ir.ui.view">
+        <field name="name">hr.attendance.search.jiv.portal</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.hr_attendance_view_filter"/>
+        <field name="arch" type="xml">
+            <search position="inside">
+                <separator/>
+                <filter name="jiv_from_portal" string="From Portal"
+                        domain="[('jiv_from_portal', '=', True)]"/>
+                <filter name="jiv_not_from_portal" string="Internal Only"
+                        domain="[('jiv_from_portal', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+</odoo>

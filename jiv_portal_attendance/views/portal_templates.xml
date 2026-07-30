@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- "Attendances" card on My Account -->
+    <template id="portal_my_home_attendance" name="Portal My Home: Attendance"
+              inherit_id="portal.portal_my_home" priority="40">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="icon" t-value="'/jiv_portal_attendance/static/description/attendance.svg'"/>
+                <t t-set="title">Attendances</t>
+                <t t-set="text">Check in, check out and review your hours</t>
+                <t t-set="url" t-value="'/my/attendances'"/>
+                <t t-set="placeholder_count" t-value="'attendance_count'"/>
+            </t>
+        </xpath>
+    </template>
+
+    <!-- Breadcrumb -->
+    <template id="portal_breadcrumbs_attendance"
+              inherit_id="portal.portal_breadcrumbs" priority="40">
+        <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
+            <li t-if="page_name == 'attendance'"
+                t-attf-class="breadcrumb-item #{'active ' if not attendance else ''}">
+                <a t-if="attendance" t-attf-href="/my/attendances?#{keep_query()}">
+                    Attendances
+                </a>
+                <t t-else="">Attendances</t>
+            </li>
+        </xpath>
+    </template>
+
+    <!-- Attendance list page -->
+    <template id="portal_my_attendances" name="My Attendances">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Attendances</t>
+            </t>
+
+            <!-- Check in / out + notification -->
+            <div class="jiv-att-bar d-flex align-items-start justify-content-between mb-3">
+                <div>
+                    <form t-if="not is_checked_in"
+                          action="/my/attendances/check_in" method="post"
+                          class="d-inline">
+                        <input type="hidden" name="csrf_token"
+                               t-att-value="request.csrf_token()"/>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa fa-sign-in me-1"/>Check In
+                        </button>
+                    </form>
+
+                    <form t-else="" action="/my/attendances/check_out"
+                          method="post" class="d-inline">
+                        <input type="hidden" name="csrf_token"
+                               t-att-value="request.csrf_token()"/>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fa fa-sign-out me-1"/>Check Out
+                        </button>
+                    </form>
+
+                    <span t-if="is_checked_in" class="ms-2 text-muted small">
+                        Checked in since
+                        <span t-field="open_attendance.check_in"
+                              t-options='{"widget": "datetime"}'/>
+                    </span>
+                </div>
+
+                <div t-if="notify_message"
+                     t-attf-class="alert alert-#{notify_type or 'info'} alert-dismissible py-2 px-3 mb-0"
+                     role="alert">
+                    <t t-out="notify_message"/>
+                    <button type="button" class="btn-close"
+                            data-bs-dismiss="alert"/>
+                </div>
+            </div>
+
+            <t t-if="not attendances">
+                <div class="alert alert-info">
+                    No attendance records yet. Use Check In to start.
+                </div>
+            </t>
+
+            <t t-else="">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Check In</th>
+                            <th>Check Out</th>
+                            <th class="text-end">Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="attendances" t-as="att">
+                            <td>
+                                <span t-field="att.check_in"
+                                      t-options='{"widget": "datetime"}'/>
+                            </td>
+                            <td>
+                                <span t-if="att.check_out" t-field="att.check_out"
+                                      t-options='{"widget": "datetime"}'/>
+                                <span t-else="" class="badge text-bg-success">
+                                    Checked in
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <span t-field="att.worked_hours"
+                                      t-options='{"widget": "float_time"}'/>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </t>
+        </t>
+    </template>
+
+</odoo>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="jiv_param_auto_create_employee" model="ir.config_parameter">
+            <field name="key">jiv_portal_attendance.auto_create_employee</field>
+            <field name="value">True</field>
+        </record>
+
+        <!--
+            Off by default: creating a checked-in record automatically on
+            login fabricates attendance the user never initiated (e.g. a
+            late-night login to read a message), which inflates worked
+            hours and overtime. Enable only if that is genuinely wanted.
+        -->
+        <record id="jiv_param_checkin_on_login" model="ir.config_parameter">
+            <field name="key">jiv_portal_attendance.checkin_on_login</field>
+            <field name="value"></field>
+        </record>
+
+    </data>
+</odoo>
