@@ -78,21 +78,36 @@ class HrAttendance(models.Model):
     def _jiv_recipient_options(self):
         """Partners a portal user may pick as care recipient.
 
-        Domain is configurable because 'who counts as a client' differs
-        per database. Default is customers only - without a domain this
-        would expose every partner in the system to portal users.
+        Selected by partner tag (res.partner.category_id), which is how
+        care recipients are marked on this database - the "Care Recipient"
+        tag. Two knobs, in priority order:
+
+          jiv_portal_attendance.recipient_domain  - full domain, wins
+          jiv_portal_attendance.recipient_tag     - tag name (default
+                                                    "Care Recipient")
+
+        A domain is required one way or the other: without one this
+        dropdown would expose every partner on the database - staff,
+        vendors, everyone - to portal users.
         """
         if not self._jiv_has_recipient_field():
             return self.env['res.partner']
         ICP = self.env['ir.config_parameter'].sudo()
+
         raw = ICP.get_param('jiv_portal_attendance.recipient_domain')
-        try:
-            domain = literal_eval(raw) if raw else [('customer_rank', '>', 0)]
-        except (ValueError, SyntaxError):
-            _logger.warning(
-                'Invalid jiv_portal_attendance.recipient_domain, '
-                'falling back to customers only')
-            domain = [('customer_rank', '>', 0)]
+        if raw:
+            try:
+                domain = literal_eval(raw)
+            except (ValueError, SyntaxError):
+                _logger.warning(
+                    'Invalid jiv_portal_attendance.recipient_domain, '
+                    'falling back to the tag')
+                raw = None
+        if not raw:
+            tag = ICP.get_param('jiv_portal_attendance.recipient_tag') \
+                or 'Care Recipient'
+            domain = [('category_id.name', '=', tag)]
+
         return self.env['res.partner'].sudo().search(domain, order='name')
 
     @api.model
