@@ -20,7 +20,8 @@ class JivPortalAttendance(CustomerPortal):
     # ------------------------------------------------------------------
     def _prepare_home_portal_values(self, counters):
         values = super()._prepare_home_portal_values(counters)
-        if 'attendance_count' in counters:
+        if 'attendance_count' in counters and \
+                request.env.user._jiv_can_use_portal_attendance():
             employee = request.env['hr.employee'].sudo().search(
                 [('user_id', '=', request.env.user.id)], limit=1)
             values['attendance_count'] = request.env[
@@ -128,6 +129,9 @@ class JivPortalAttendance(CustomerPortal):
     def jiv_portal_attendances(self, page=1, sortby='check_in',
                               filterby='all', search='', search_in='all',
                               **kw):
+        if not request.env.user._jiv_can_use_portal_attendance():
+            return request.redirect('/my')
+
         Attendance = request.env['hr.attendance'].sudo()
 
         sortings = self._jiv_searchbar_sortings()

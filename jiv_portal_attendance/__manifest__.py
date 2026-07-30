@@ -29,9 +29,11 @@ Notes
     'license': 'LGPL-3',
     'depends': ['hr_attendance', 'portal'],
     'data': [
+        'security/portal_attendance_groups.xml',
         'security/ir.model.access.csv',
         'security/portal_attendance_rules.xml',
         'data/portal_attendance_data.xml',
+        'views/res_config_settings_views.xml',
         'views/hr_attendance_views.xml',
         'views/portal_templates.xml',
     ],

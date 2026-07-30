@@ -13,14 +13,23 @@ Portal users check in / check out from **My Account > Attendances**.
 
 ## Setup
 
-Defaults install as system parameters (Settings > Technical > System
-Parameters), keys prefixed `jiv_portal_attendance.`:
+**Settings > Portal Attendance** (own section in the Settings app):
+
+- *Restrict to Selected Users* - limit check-in to the "Portal
+  Attendance" group. Off by default, meaning every portal user on the
+  database can check in, including customers on unrelated projects.
+- *Auto-create Employee* + *Department*
+- *Check In Automatically on Login*
+
+These write the system parameters below, which can also be edited
+directly under Settings > Technical > System Parameters:
 
 | Key | Default | Meaning |
 |---|---|---|
 | `auto_create_employee` | `True` | Provision an `hr.employee` on first check-in |
 | `employee_department_id` | *(unset)* | Department for auto-created employees |
 | `checkin_on_login` | *(empty = off)* | See below |
+| `restrict_group` | *(empty = off)* | Require the Portal Attendance group |
 
 **Note:** `get_param` returns strings, so `'False'` is truthy. To disable
 a flag set the value to an **empty string**, not `False`.

@@ -5,7 +5,8 @@
     <template id="portal_my_home_attendance" name="Portal My Home: Attendance"
               inherit_id="portal.portal_my_home" priority="40">
         <xpath expr="//div[hasclass('o_portal_docs')]" position="inside">
-            <t t-call="portal.portal_docs_entry">
+            <t t-call="portal.portal_docs_entry"
+               t-if="request.env.user._jiv_can_use_portal_attendance()">
                 <t t-set="icon" t-value="'/jiv_portal_attendance/static/description/attendance.svg'"/>
                 <t t-set="title">Attendances</t>
                 <t t-set="text">Check in, check out and review your hours</t>

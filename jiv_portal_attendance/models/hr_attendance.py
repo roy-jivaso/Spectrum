@@ -63,6 +63,9 @@ class HrAttendance(models.Model):
     @api.model
     def jiv_portal_check_in(self):
         """Open a new attendance for the current portal user."""
+        if not self.env.user._jiv_can_use_portal_attendance():
+            raise AccessError(_(
+                'You are not allowed to record attendance.'))
         employee = self.env.user._jiv_get_attendance_employee()
         if self._jiv_get_open_attendance(employee):
             raise UserError(_(
@@ -76,6 +79,9 @@ class HrAttendance(models.Model):
     @api.model
     def jiv_portal_check_out(self):
         """Close the open attendance for the current portal user."""
+        if not self.env.user._jiv_can_use_portal_attendance():
+            raise AccessError(_(
+                'You are not allowed to record attendance.'))
         employee = self.env.user._jiv_get_attendance_employee()
         attendance = self._jiv_get_open_attendance(employee)
         if not attendance:
