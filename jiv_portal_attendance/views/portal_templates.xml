@@ -71,21 +71,26 @@
                 <t t-set="title">Attendances</t>
             </t>
 
-            <!-- Create + notification -->
-            <div class="jiv-att-bar d-flex align-items-start justify-content-between mb-3">
+            <!--
+                Notification sits on its own full-width row above the
+                table. Inside the button row it was clamped to a narrow
+                column and long validation messages wrapped badly.
+            -->
+            <div t-if="notify_message"
+                 t-attf-class="alert alert-#{notify_type or 'info'} alert-dismissible d-flex align-items-center"
+                 role="alert">
+                <i t-attf-class="fa me-2 #{'fa-check-circle' if notify_type == 'success' else 'fa-exclamation-triangle'}"/>
+                <div class="flex-grow-1"><t t-out="notify_message"/></div>
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="alert" aria-label="Close"/>
+            </div>
+
+            <div class="jiv-att-bar mb-3">
                 <button type="button" class="btn btn-primary"
                         data-bs-toggle="modal"
                         data-bs-target="#jivAttendanceModal">
                     <i class="fa fa-plus me-1"/>Create Attendance
                 </button>
-
-                <div t-if="notify_message"
-                     t-attf-class="alert alert-#{notify_type or 'info'} alert-dismissible py-2 px-3 mb-0"
-                     role="alert">
-                    <t t-out="notify_message"/>
-                    <button type="button" class="btn-close"
-                            data-bs-dismiss="alert"/>
-                </div>
             </div>
 
             <!-- Create Attendance dialog: mirrors the backend form -->

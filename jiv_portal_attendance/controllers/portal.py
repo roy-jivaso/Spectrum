@@ -187,17 +187,35 @@ class JivPortalAttendance(CustomerPortal):
     # ------------------------------------------------------------------
     # Create
     # ------------------------------------------------------------------
+    def _jiv_user_tz(self):
+        """Timezone for interpreting form input.
+
+        res.users.tz is often blank on portal users, and defaulting
+        straight to UTC makes every submitted time wrong by the local
+        offset - entering 7:30 PM IST would be read as 7:30 PM UTC and
+        rejected as being in the future.
+        """
+        tz_name = (request.env.user.tz
+                   or request.env.context.get('tz')
+                   or request.httprequest.cookies.get('tz')
+                   or request.env.company.partner_id.tz
+                   or 'UTC')
+        try:
+            return pytz.timezone(tz_name)
+        except pytz.UnknownTimeZoneError:
+            _logger.warning('Unknown timezone %r, using UTC', tz_name)
+            return pytz.UTC
+
     def _jiv_local_to_utc(self, value):
         """Convert a datetime-local form value to naive UTC.
 
         The browser sends wall-clock time in the user's timezone
-        ('2026-07-30T19:30'); hr.attendance stores naive UTC. Skipping
-        this makes every record wrong by the tz offset - 5h30m here.
+        ('2026-07-30T19:30'); hr.attendance stores naive UTC.
         """
         if not value:
             return None
         naive = datetime.strptime(value[:16], '%Y-%m-%dT%H:%M')
-        user_tz = pytz.timezone(request.env.user.tz or 'UTC')
+        user_tz = self._jiv_user_tz()
         return fields.Datetime.to_string(
             user_tz.localize(naive).astimezone(pytz.UTC).replace(tzinfo=None))
 
