@@ -18,13 +18,6 @@ class JivPortalAttendance(CustomerPortal):
     # ------------------------------------------------------------------
     # My Account counter
     # ------------------------------------------------------------------
-    def _prepare_portal_layout_values(self):
-        values = super()._prepare_portal_layout_values()
-        # portal_service_category is wrapped in t-if="portal_service_category_enable";
-        # without this the container - and our card inside it - is hidden.
-        values['portal_service_category_enable'] = True
-        return values
-
     def _prepare_home_portal_values(self, counters):
         values = super()._prepare_home_portal_values(counters)
         if 'attendance_count' in counters and \
@@ -168,8 +161,10 @@ class JivPortalAttendance(CustomerPortal):
             domain, order=sortings[sortby]['order'],
             limit=self._items_per_page, offset=page_detail['offset'])
 
-        is_checked_in, open_attendance = request.env.user\
-            ._jiv_portal_attendance_state()
+        Att = request.env['hr.attendance']
+        needs_recipient = Att._jiv_has_recipient_field()
+        recipients = Att._jiv_recipient_options() if needs_recipient \
+            else request.env['res.partner']
 
         return request.render('jiv_portal_attendance.portal_my_attendances', {
             'attendances': records,
@@ -182,47 +177,51 @@ class JivPortalAttendance(CustomerPortal):
             'filterby': filterby,
             'search': search,
             'search_in': search_in,
-            'is_checked_in': is_checked_in,
-            'open_attendance': open_attendance,
+            'needs_recipient': needs_recipient,
+            'recipients': recipients,
+            'recipient_field': Att.JIV_RECIPIENT_FIELD,
             'notify_type': request.params.get('notify'),
             'notify_message': request.session.pop('jiv_att_message', None),
         })
 
     # ------------------------------------------------------------------
-    # Check in / out
+    # Create
     # ------------------------------------------------------------------
-    @http.route(['/my/attendances/check_in'], type='http', auth='user',
-                website=True, methods=['POST'], csrf=True)
-    def jiv_portal_check_in(self, **post):
-        try:
-            request.env['hr.attendance'].jiv_portal_check_in()
-            request.session['jiv_att_message'] = _('Check In Successfully.')
-            notify = 'success'
-        except (UserError, AccessError) as exc:
-            request.session['jiv_att_message'] = str(exc)
-            notify = 'danger'
-        except Exception:
-            _logger.exception('Portal check-in failed for user %s',
-                              request.env.user.id)
-            request.session['jiv_att_message'] = _(
-                'Check in failed. Please contact your administrator.')
-            notify = 'danger'
-        return request.redirect('/my/attendances?notify=%s' % notify)
+    def _jiv_local_to_utc(self, value):
+        """Convert a datetime-local form value to naive UTC.
 
-    @http.route(['/my/attendances/check_out'], type='http', auth='user',
+        The browser sends wall-clock time in the user's timezone
+        ('2026-07-30T19:30'); hr.attendance stores naive UTC. Skipping
+        this makes every record wrong by the tz offset - 5h30m here.
+        """
+        if not value:
+            return None
+        naive = datetime.strptime(value[:16], '%Y-%m-%dT%H:%M')
+        user_tz = pytz.timezone(request.env.user.tz or 'UTC')
+        return fields.Datetime.to_string(
+            user_tz.localize(naive).astimezone(pytz.UTC).replace(tzinfo=None))
+
+    @http.route(['/my/attendances/new'], type='http', auth='user',
                 website=True, methods=['POST'], csrf=True)
-    def jiv_portal_check_out(self, **post):
+    def jiv_portal_attendance_create(self, check_in=None, check_out=None,
+                                     recipient_id=None, **post):
         try:
-            request.env['hr.attendance'].jiv_portal_check_out()
-            request.session['jiv_att_message'] = _('Check Out Successfully.')
+            request.env['hr.attendance'].jiv_portal_create_attendance(
+                check_in=self._jiv_local_to_utc(check_in),
+                check_out=self._jiv_local_to_utc(check_out),
+                recipient_id=recipient_id or None,
+            )
+            request.session['jiv_att_message'] = _(
+                'Attendance created successfully.')
             notify = 'success'
         except (UserError, AccessError) as exc:
             request.session['jiv_att_message'] = str(exc)
             notify = 'danger'
         except Exception:
-            _logger.exception('Portal check-out failed for user %s',
+            _logger.exception('Portal attendance creation failed for user %s',
                               request.env.user.id)
             request.session['jiv_att_message'] = _(
-                'Check out failed. Please contact your administrator.')
+                'The attendance could not be saved. Please contact your '
+                'administrator.')
             notify = 'danger'
         return request.redirect('/my/attendances?notify=%s' % notify)

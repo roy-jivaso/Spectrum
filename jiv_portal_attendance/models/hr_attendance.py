@@ -55,8 +55,13 @@ class HrAttendance(models.Model):
         return super().unlink()
 
     # ------------------------------------------------------------------
-    # Portal check in / out
+    # Portal attendance creation
     # ------------------------------------------------------------------
+    # Studio field on hr.attendance linking the shift to a client.
+    # Guarded everywhere: the module must still work on databases where
+    # this field was never created.
+    JIV_RECIPIENT_FIELD = 'x_studio_client_care_recipient'
+
     @api.model
     def _jiv_get_open_attendance(self, employee):
         """The employee's currently open (not checked out) record."""
@@ -64,11 +69,6 @@ class HrAttendance(models.Model):
             ('employee_id', '=', employee.id),
             ('check_out', '=', False),
         ], order='check_in desc', limit=1)
-
-    # Studio field on hr.attendance linking the shift to a client.
-    # Guarded everywhere: the module must still work on databases where
-    # this field was never created.
-    JIV_RECIPIENT_FIELD = 'x_studio_client_care_recipient'
 
     @api.model
     def _jiv_has_recipient_field(self):
@@ -96,26 +96,33 @@ class HrAttendance(models.Model):
         return self.env['res.partner'].sudo().search(domain, order='name')
 
     @api.model
-    def jiv_portal_check_in(self, recipient_id=None):
-        """Open a new attendance for the current portal user."""
+    def jiv_portal_create_attendance(self, check_in, check_out=None,
+                                     recipient_id=None):
+        """Create an attendance record on behalf of a portal user.
+
+        Mirrors the backend form: the user supplies the client and both
+        datetimes rather than clocking in live.
+        """
         if not self.env.user._jiv_can_use_portal_attendance():
             raise AccessError(_(
                 'You are not allowed to record attendance.'))
+        if not check_in:
+            raise UserError(_('Please provide a check in date and time.'))
+
         employee = self.env.user._jiv_get_attendance_employee()
-        if self._jiv_get_open_attendance(employee):
-            raise UserError(_(
-                'You are already checked in. Please check out first.'))
 
         vals = {
             'employee_id': employee.id,
-            'check_in': fields.Datetime.now(),
+            'check_in': check_in,
             'jiv_from_portal': True,
         }
+        if check_out:
+            vals['check_out'] = check_out
 
         if self._jiv_has_recipient_field():
             if not recipient_id:
                 raise UserError(_(
-                    'Please select a client before checking in.'))
+                    'Please select a client before saving.'))
             # Validate against the allowed list rather than trusting the
             # posted id - the form is client-side and can be tampered with.
             allowed = self._jiv_recipient_options()
@@ -124,20 +131,49 @@ class HrAttendance(models.Model):
                     'That client is not available for selection.'))
             vals[self.JIV_RECIPIENT_FIELD] = int(recipient_id)
 
-        return self.sudo().create(vals)
+        self._jiv_validate_period(employee, vals['check_in'],
+                                  vals.get('check_out'))
+
+        return self.sudo().with_context(
+            jiv_skip_portal_field_check=True).create(vals)
 
     @api.model
-    def jiv_portal_check_out(self):
-        """Close the open attendance for the current portal user."""
-        if not self.env.user._jiv_can_use_portal_attendance():
-            raise AccessError(_(
-                'You are not allowed to record attendance.'))
-        employee = self.env.user._jiv_get_attendance_employee()
-        attendance = self._jiv_get_open_attendance(employee)
-        if not attendance:
+    def _jiv_validate_period(self, employee, check_in, check_out=None):
+        """Sanity checks a portal user's submitted period."""
+        check_in = fields.Datetime.to_datetime(check_in)
+        check_out = fields.Datetime.to_datetime(check_out) if check_out \
+            else None
+        now = fields.Datetime.now()
+
+        if check_in > now:
+            raise UserError(_('Check in cannot be in the future.'))
+        if check_out:
+            if check_out <= check_in:
+                raise UserError(_(
+                    'Check out must be later than check in.'))
+            if check_out > now:
+                raise UserError(_('Check out cannot be in the future.'))
+            max_hours = float(self.env['ir.config_parameter'].sudo().get_param(
+                'jiv_portal_attendance.max_hours_per_record', 24.0))
+            hours = (check_out - check_in).total_seconds() / 3600.0
+            if hours > max_hours:
+                raise UserError(_(
+                    'A single attendance cannot exceed %(max)s hours. '
+                    'Please split it into separate records.',
+                    max=max_hours))
+
+        # Overlapping shifts corrupt worked-hours totals, and hr_attendance
+        # only guards this partially for records created via sudo.
+        domain = [
+            ('employee_id', '=', employee.id),
+            ('check_in', '<', fields.Datetime.to_string(check_out or check_in)),
+        ]
+        if check_out:
+            domain += ['|', ('check_out', '=', False),
+                       ('check_out', '>', fields.Datetime.to_string(check_in))]
+        else:
+            domain += [('check_out', '=', False)]
+        if self.sudo().search_count(domain):
             raise UserError(_(
-                'You are not checked in, so there is nothing to close.'))
-        attendance.with_context(
-            jiv_skip_portal_field_check=True,
-        ).write({'check_out': fields.Datetime.now()})
-        return attendance
+                'This period overlaps an attendance you have already '
+                'recorded.'))
