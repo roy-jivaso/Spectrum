@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-<data noupdate="1">
+<data noupdate="0">
 
     <record id="email_template_intake_form" model="mail.template">
         <field name="name">Spectrum: Client Intake Form</field>
@@ -10,33 +10,23 @@
         <field name="email_to">{{ object.partner_id.email or object.email_from or '' }}</field>
         <field name="body_html" type="html">
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-                <div style="background-color: #095358; padding: 24px 32px; border-radius: 8px 8px 0 0;">
-                    <h1 style="color: #ffffff; margin: 0; font-size: 22px;">Spectrum Home &amp; Family Care</h1>
-                    <p style="color: #EBE8DE; margin: 6px 0 0 0; font-size: 14px;">Client Intake Form</p>
+                <p style="font-size: 15px;">Dear <t t-out="object.partner_id.name or object.partner_name or object.contact_name or 'there'"/>,</p>
+                <p style="font-size: 15px; line-height: 1.6;">
+                    Thank you for reaching out to Spectrum Home &amp; Family Care.
+                    Please take a few minutes to complete our intake form so we can
+                    understand your needs and match you with the right caregiver.
+                </p>
+                <div style="text-align: center; margin: 32px 0;">
+                    <a t-att-href="'%s/intake/%s' % (env['ir.config_parameter'].sudo().get_param('web.base.url'), object.x_intake_token)"
+                       style="background-color: #875A7B; color: #ffffff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-size: 16px; font-weight: bold; display: inline-block;">
+                        Complete My Intake Form
+                    </a>
                 </div>
-                <div style="background: #ffffff; padding: 32px; border: 1px solid #e0e0e0; border-top: none;">
-                    <p style="font-size: 15px;">Dear <t t-out="object.partner_id.name or object.partner_name or object.contact_name or 'there'"/>,</p>
-                    <p style="font-size: 15px; line-height: 1.6;">
-                        Thank you for reaching out to Spectrum Home &amp; Family Care.
-                        Please take a few minutes to complete our intake form so we can
-                        understand your needs and match you with the right caregiver.
-                    </p>
-                    <div style="text-align: center; margin: 32px 0;">
-                        <a t-att-href="'%s/intake/%s' % (env['ir.config_parameter'].sudo().get_param('web.base.url'), object.x_intake_token)"
-                           style="background-color: #095358; color: #ffffff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-size: 16px; font-weight: bold; display: inline-block;">
-                            Complete My Intake Form
-                        </a>
-                    </div>
-                    <p style="font-size: 13px; color: #666; line-height: 1.6;">
-                        This link is personal to you — please do not share it.
-                        It takes about 5 minutes to complete.
-                        One of our team members will follow up shortly after you submit.
-                    </p>
-                    <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;"/>
-                    <p style="font-size: 12px; color: #999; margin: 0;">
-                        Spectrum Home &amp; Family Care | Confidential
-                    </p>
-                </div>
+                <p style="font-size: 13px; color: #666; line-height: 1.6;">
+                    This link is personal to you — please do not share it.
+                    It takes about 5 minutes to complete.
+                    One of our team members will follow up shortly after you submit.
+                </p>
             </div>
         </field>
         <field name="auto_delete" eval="True"/>
