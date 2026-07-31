@@ -1,52 +1,76 @@
 import uuid
 from odoo import models, fields, api
 
+# Fields to sync between crm.lead and res.partner.
+# Excludes phone/email which map differently on each model.
+# Format: (lead_field, partner_field)
+SYNC_FIELDS = [
+    ('x_studio_date_of_birth',                  'x_studio_date_of_birth'),
+    ('x_studio_emergency_contact_name',          'x_studio_emergency_contact_name'),
+    ('x_studio_emergency_contact_phone',         'x_studio_emergency_contact_phone'),
+    ('x_studio_emergency_contact_relationship',  'x_studio_emergency_contact_relationship'),
+    ('x_studio_payer_type',                      'x_studio_payer_type'),
+    ('x_studio_bill_to',                         'x_studio_bill_to'),
+    ('x_studio_claim_reference_',                'x_studio_claim_reference_'),
+    ('x_studio_referral_date',                   'x_studio_referral_date'),
+    ('x_studio_case_manager_name',               'x_studio_case_manager_name'),
+    ('x_studio_case_manager_phone',              'x_studio_case_manager_phone'),
+    ('x_studio_case_manager_email',              'x_studio_case_manager_email'),
+    ('x_studio_service_description',             'x_studio_service_description'),
+    ('x_studio_authorized_hoursweek',            'x_studio_authorized_hoursweek'),
+    ('x_studio_service_rate',                    'x_studio_service_rate'),
+    ('x_studio_monthly_authorized_budget',       'x_studio_monthly_authorized_budget'),
+    ('x_studio_budgetauthorization_expiry_date', 'x_studio_budgetauthorization_expiry_date'),
+    ('x_studio_desired_start_date',              'x_studio_desired_start_date'),
+    ('x_studio_estimated_hoursweek',             'x_studio_estimated_hoursweek'),
+    ('x_studio_preferred_time_of_day',           'x_studio_preferred_time_of_day'),
+    ('x_studio_mobility_needs',                  'x_studio_mobility_needs'),
+    ('x_studio_allergies_medical_conditions',    'x_studio_allergies_medical_conditions'),
+    ('x_studio_medications',                     'x_studio_medications'),
+    ('x_studio_caregiver_gender_preference',     'x_studio_caregiver_gender_preference'),
+    ('x_studio_language_preference',             'x_studio_language_preference'),
+    ('x_studio_pets_in_home',                    'x_studio_pets_in_home'),
+    ('x_studio_access_instructions',             'x_studio_access_instructions'),
+    ('x_studio_physician_name',                  'x_studio_physician_name'),
+    ('x_studio_physician_phone',                 'x_studio_physician_phone'),
+    ('x_studio_ot_name',                         'x_studio_ot_name'),
+    ('x_studio_ot_phone',                        'x_studio_ot_phone'),
+    ('x_studio_consent_contact_by_phoneemail',   'x_studio_consent_contact_by_phoneemail'),
+]
+
+# Many2many fields need special handling
+M2M_SYNC = [
+    ('x_studio_service_types',  'x_studio_service_types'),
+    ('x_studio_preferred_days', 'x_studio_preferred_days'),
+]
+
 
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
 
-    # Unique token so the public form URL is unguessable
+    # Token fields for intake form
     x_intake_token = fields.Char(
-        string='Intake Token',
-        copy=False,
-        readonly=True,
-        index=True,
-    )
+        string='Intake Token', copy=False, readonly=True, index=True)
     x_intake_submitted = fields.Boolean(
-        string='Intake Form Submitted',
-        default=False,
-        copy=False,
-        readonly=True,
-    )
+        string='Intake Form Submitted', default=False, copy=False, readonly=True)
     x_intake_submitted_date = fields.Datetime(
-        string='Intake Submitted On',
-        copy=False,
-        readonly=True,
-    )
+        string='Intake Submitted On', copy=False, readonly=True)
 
     def _get_or_create_intake_token(self):
-        """Return existing token or mint a new one."""
         self.ensure_one()
         if not self.x_intake_token:
             self.x_intake_token = uuid.uuid4().hex
         return self.x_intake_token
 
     def action_send_intake_form(self):
-        """Open the Send Intake Form dialog."""
         self.ensure_one()
         self._get_or_create_intake_token()
-
         template = self.env.ref(
-            'jiv_spectrum_intake.email_template_intake_form', raise_if_not_found=False)
-
-        # Build default recipient: partner email or email_from
-        default_email = (
-            self.partner_id.email or self.email_from or ''
-        )
+            'jiv_spectrum_intake.email_template_intake_form',
+            raise_if_not_found=False)
+        default_email = self.partner_id.email or self.email_from or ''
         default_name = (
-            self.partner_id.name or self.partner_name or self.contact_name or ''
-        )
-
+            self.partner_id.name or self.partner_name or self.contact_name or '')
         ctx = {
             'default_model': 'crm.lead',
             'default_res_ids': self.ids,
@@ -56,7 +80,6 @@ class CrmLead(models.Model):
             'default_email_to': default_email,
             'default_email_from': self.env.user.email_formatted,
             'force_email': True,
-            # Pass through so the dialog JS can show the link
             'intake_url': self._get_intake_url(),
             'recipient_name': default_name,
             'recipient_email': default_email,
@@ -76,13 +99,56 @@ class CrmLead(models.Model):
         base = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
         return f"{base}/intake/{self.x_intake_token}"
 
+    # ------------------------------------------------------------------
+    # Sync helpers
+    # ------------------------------------------------------------------
+    def _sync_to_partner(self, write_vals):
+        """Push intake values to the linked partner."""
+        self.ensure_one()
+        if not self.partner_id:
+            return
+        partner_vals = {}
+        for lead_f, partner_f in SYNC_FIELDS:
+            if lead_f in write_vals:
+                partner_vals[partner_f] = write_vals[lead_f]
+        for lead_f, partner_f in M2M_SYNC:
+            if lead_f in write_vals:
+                partner_vals[partner_f] = write_vals[lead_f]
+        if partner_vals:
+            self.partner_id.sudo().write(partner_vals)
+
+    def _sync_from_partner(self):
+        """Pull profile values from partner into this lead (fills blanks only)."""
+        self.ensure_one()
+        if not self.partner_id:
+            return
+        p = self.partner_id
+        vals = {}
+        for lead_f, partner_f in SYNC_FIELDS:
+            lead_val = getattr(self, lead_f, False)
+            partner_val = getattr(p, partner_f, False)
+            if not lead_val and partner_val:
+                vals[lead_f] = partner_val.id if hasattr(partner_val, 'id') \
+                    else partner_val
+        for lead_f, partner_f in M2M_SYNC:
+            lead_val = getattr(self, lead_f, False)
+            partner_val = getattr(p, partner_f, False)
+            if not lead_val and partner_val:
+                vals[lead_f] = [(6, 0, partner_val.ids)]
+        if vals:
+            self.sudo().write(vals)
+
+    @api.onchange('partner_id')
+    def _onchange_partner_id_sync_profile(self):
+        """When partner is set on opportunity, pull profile from partner."""
+        if self.partner_id and self.type == 'opportunity':
+            self._sync_from_partner()
+
+    # ------------------------------------------------------------------
+    # Submit intake form
+    # ------------------------------------------------------------------
     @api.model
     def submit_intake_form(self, token, values):
-        """
-        Called by the website controller on form submission.
-        Finds the lead by token and writes all intake values.
-        Returns dict with status.
-        """
         lead = self.sudo().search([('x_intake_token', '=', token)], limit=1)
         if not lead:
             return {'status': 'error', 'message': 'Invalid or expired link.'}
@@ -117,7 +183,7 @@ class CrmLead(models.Model):
         if values.get('case_manager_email'):
             write_vals['x_studio_case_manager_email'] = values['case_manager_email']
 
-        # Section 3 — Services (many2many by x_name)
+        # Section 3 — Services
         if values.get('service_types'):
             service_ids = []
             for name in values['service_types']:
@@ -183,12 +249,24 @@ class CrmLead(models.Model):
         write_vals['x_intake_submitted'] = True
         write_vals['x_intake_submitted_date'] = fields.Datetime.now()
 
+        # Write to lead
         lead.write(write_vals)
 
-        # Post chatter message
+        # Sync to partner — so profile tab on contact is populated
+        lead._sync_to_partner(write_vals)
+
+        # Also sync phone/email to partner directly
+        if lead.partner_id:
+            partner_basic = {}
+            if values.get('phone'):
+                partner_basic['phone'] = values['phone']
+            if values.get('email'):
+                partner_basic['email'] = values['email']
+            if partner_basic:
+                lead.partner_id.sudo().write(partner_basic)
+
         lead.message_post(
-            body="✅Client Intake Form submitted via the online link.",
+            body="✅ <b>Client Intake Form submitted</b> via the online link.",
             subtype_xmlid='mail.mt_note',
         )
-
         return {'status': 'ok'}

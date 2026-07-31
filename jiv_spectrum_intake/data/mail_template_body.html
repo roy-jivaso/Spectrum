@@ -1,0 +1,19 @@
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+    <p style="font-size: 15px;">Dear <t t-out="object.partner_id.name or object.partner_name or object.contact_name or 'there'"/>,</p>
+    <p style="font-size: 15px; line-height: 1.6;">
+        Thank you for reaching out to Spectrum Home &amp; Family Care.
+        Please take a few minutes to complete our intake form so we can
+        understand your needs and match you with the right caregiver.
+    </p>
+    <div style="text-align: center; margin: 32px 0;">
+        <a t-att-href="'%s/intake/%s' % (env['ir.config_parameter'].sudo().get_param('web.base.url'), object.x_intake_token)"
+           style="background-color: #875A7B; color: #ffffff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-size: 16px; font-weight: bold; display: inline-block;">
+            Complete My Intake Form
+        </a>
+    </div>
+    <p style="font-size: 13px; color: #666; line-height: 1.6;">
+        This link is personal to you — please do not share it.
+        It takes about 5 minutes to complete.
+        One of our team members will follow up shortly after you submit.
+    </p>
+</div>

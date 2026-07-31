@@ -1,15 +1,16 @@
 {
     'name': 'Spectrum Client Intake Form',
     'version': '19.0.1.0.0',
-    'summary': 'Send intake form link to prospects; capture submissions into CRM leads',
+    'summary': 'Send intake form link to prospects; capture submissions into CRM leads and contacts',
     'category': 'CRM',
-
-    'depends': ['crm', 'website', 'mail'],
+    'author': 'Zyvi Technologies',
+    'depends': ['crm', 'website', 'mail', 'contacts'],
     'data': [
         'security/ir.model.access.csv',
         'data/mail_template.xml',
         'views/intake_form_template.xml',
         'views/crm_lead_views.xml',
+        'views/res_partner_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
