@@ -187,7 +187,7 @@ class CrmLead(models.Model):
 
         # Post chatter message
         lead.message_post(
-            body="✅ <b>Client Intake Form submitted</b> via the online link.",
+            body="✅Client Intake Form submitted via the online link.",
             subtype_xmlid='mail.mt_note',
         )
 
