@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="crm_lead_view_form_contract_buttons" model="ir.ui.view">
+        <field name="name">crm.lead.form.contract.buttons</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <data>
+                <!-- Buttons — opportunity only -->
+                <xpath expr="/form/header/button[@name='action_send_intake_form']" position="after">
+                    <button name="action_generate_contract"
+                            string="Generate Contract"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="type != 'opportunity'"
+                            icon="fa-file-text-o"/>
+                    <button name="action_send_contract"
+                            string="Send Contract"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="type != 'opportunity' or x_contract_state == 'draft'"
+                            icon="fa-paper-plane"/>
+                </xpath>
+
+                <!-- Contract status badge -->
+                <xpath expr="/form/header/button[@name='action_send_contract']" position="after">
+                    <span invisible="type != 'opportunity' or x_contract_state == 'draft'">
+                        <span invisible="x_contract_state != 'generated'"
+                              class="badge text-bg-secondary ms-1">Contract Generated</span>
+                        <span invisible="x_contract_state != 'sent'"
+                              class="badge text-bg-info ms-1">Contract Sent</span>
+                        <span invisible="x_contract_state != 'signed'"
+                              class="badge text-bg-success ms-1">Contract Signed ✓</span>
+                    </span>
+                </xpath>
+
+                <!-- Hidden tracking fields -->
+                <xpath expr="/form//field[@name='message_bounce']" position="before">
+                    <field name="x_contract_state" invisible="1"/>
+                    <field name="x_contract_token" invisible="1"/>
+                    <field name="x_contract_signed_date" invisible="1"/>
+                </xpath>
+            </data>
+        </field>
+    </record>
+</odoo>

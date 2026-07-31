@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<template id="report_contract_document">
+<t t-call="web.html_container">
+<t t-foreach="docs" t-as="o">
+<t t-call="web.external_layout">
+<div class="page">
+    <style>
+        .contract-header { text-align: center; margin-bottom: 24px; }
+        .contract-header h2 { color: #095358; margin: 0; }
+        .contract-header p { color: #666; margin: 4px 0 0; }
+        .section-title { color: #095358; font-weight: bold; font-size: 14px;
+                         border-bottom: 2px solid #095358; padding-bottom: 4px;
+                         margin: 20px 0 10px; }
+        .parties-box { background: #f8f8f6; border: 1px solid #ddd;
+                       padding: 12px 16px; border-radius: 4px; margin-bottom: 16px; }
+        .parties-box p { margin: 4px 0; }
+        table.service-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        table.service-table th { background: #095358; color: #fff;
+                                  padding: 8px; text-align: left; font-size: 11px; }
+        table.service-table td { border: 1px solid #ddd; padding: 7px 8px;
+                                  font-size: 11px; }
+        table.service-table tr:nth-child(even) td { background: #f5f5f5; }
+        .field-row { display: flex; gap: 32px; margin: 6px 0; }
+        .field-label { font-weight: bold; min-width: 220px; font-size: 11px; }
+        .field-value { font-size: 11px; border-bottom: 1px solid #999;
+                        min-width: 200px; padding-bottom: 2px; }
+        .bullet { margin: 4px 0 4px 16px; font-size: 11px; }
+        .sig-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .sig-table td { padding: 12px 8px; border-top: 1px solid #ddd;
+                         font-size: 11px; vertical-align: bottom; }
+        .sig-line { border-bottom: 1px solid #333; min-width: 200px;
+                     display: inline-block; margin-top: 32px; }
+        p.body-text { font-size: 11px; line-height: 1.6; margin: 6px 0; }
+    </style>
+
+    <!-- Header -->
+    <div class="contract-header">
+        <h2>SPECTRUM HOME &amp; FAMILY CARE</h2>
+        <p><em>Client Service Agreement</em></p>
+    </div>
+
+    <p class="body-text">
+        THIS CLIENT SERVICE AGREEMENT (the "Agreement") is made and entered into
+        as of the date signed below,
+    </p>
+
+    <div class="parties-box">
+        <p><strong>BETWEEN</strong></p>
+        <p>Spectrum Home &amp; Family Care, a home care services provider (the "Agency"),</p>
+        <p><strong>AND</strong></p>
+        <p><strong>Client / Care Recipient Full Name:</strong>
+           <span style="border-bottom:1px solid #333; min-width:200px; display:inline-block; padding: 0 4px;">
+               <t t-esc="o.client_name or ''"/>
+           </span>
+        </p>
+        <p><strong>Payer (if different from Client):</strong>
+           <span style="border-bottom:1px solid #333; min-width:200px; display:inline-block; padding: 0 4px;">
+               <t t-esc="o.payer or ''"/>
+           </span>
+        </p>
+        <p>(collectively, the "Client"). The Agency and the Client agree as follows:</p>
+    </div>
+
+    <!-- 1. Services -->
+    <div class="section-title">1. Services</div>
+    <p class="body-text">
+        The Agency will arrange for a qualified caregiver to provide the Client with
+        the service(s) described below, subject to the availability of suitable staff
+        and any funding authorization held by the payer identified above.
+    </p>
+    <table class="service-table">
+        <thead>
+            <tr>
+                <th>Service Type</th>
+                <th>Authorized Hours/Week</th>
+                <th>Rate</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><t t-esc="o.service_type or ''"/></td>
+                <td><t t-esc="o.authorized_hours_week or ''"/></td>
+                <td>$<t t-esc="'%.2f' % (o.service_rate or 0)"/> /hr</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="field-row">
+        <span class="field-label">Monthly Authorized Budget:</span>
+        <span class="field-value">$<t t-esc="'%.2f' % (o.monthly_budget or 0)"/></span>
+        <span class="field-label">Authorization Expiry Date:</span>
+        <span class="field-value"><t t-esc="o.budget_expiry_date or ''"/></span>
+    </div>
+
+    <!-- 2. Term and Termination -->
+    <div class="section-title">2. Term and Termination</div>
+    <p class="body-text">
+        This Agreement begins on the Start Date below and continues until the
+        Authorization Expiry Date noted above (where applicable), or until
+        terminated earlier in accordance with this section.
+    </p>
+    <p class="bullet">• Either party may terminate this Agreement by providing at least
+        <strong><t t-esc="o.notice_days or 14"/> days'</strong> written notice.
+    </p>
+    <p class="bullet">• The Agency may suspend or end Services immediately, without notice,
+        where continuing to provide care would pose a health or safety risk.
+    </p>
+    <p class="bullet">• Where Services are funded by CLBC, this Agreement is also subject to
+        review in line with the Client's Individualized Support Plan (ISP),
+        typically every four (4) months.
+    </p>
+    <div class="field-row" style="margin-top:8px;">
+        <span class="field-label">Start Date:</span>
+        <span class="field-value"><t t-esc="o.start_date or ''"/></span>
+    </div>
+
+    <!-- 3. Fees and Payment -->
+    <div class="section-title">3. Fees and Payment</div>
+    <p class="body-text">Fees for Services are billed as follows:</p>
+    <p class="bullet">• <strong>Private Pay</strong> clients are invoiced monthly, payment due upon receipt.</p>
+    <p class="bullet">• <strong>Funded clients</strong> (CLBC, ICBC, IHA, Blue Cross, AHS): the Agency invoices the payer directly. The Client is not responsible for payment except where the payer declines to cover a billed amount.</p>
+    <p class="bullet">• A processing fee may apply to credit card payments, disclosed in advance.</p>
+    <div class="field-row" style="margin-top:8px;">
+        <span class="field-label">Billing Contact Name:</span>
+        <span class="field-value"><t t-esc="o.billing_contact_name or ''"/></span>
+        <span class="field-label">Billing Contact Email:</span>
+        <span class="field-value"><t t-esc="o.billing_contact_email or ''"/></span>
+    </div>
+
+    <!-- 4. Scheduling -->
+    <div class="section-title">4. Scheduling</div>
+    <p class="body-text">
+        Caregiver shifts are scheduled directly between the Client and the assigned
+        caregiver following an initial meet-and-greet. Hours beyond the authorized
+        amount require the payer's prior written approval.
+    </p>
+    <div class="field-row">
+        <span class="field-label">Preferred Start Date:</span>
+        <span class="field-value"><t t-esc="o.start_date or ''"/></span>
+        <span class="field-label">Preferred Days / Times:</span>
+        <span class="field-value"><t t-esc="o.preferred_days or ''"/></span>
+    </div>
+
+    <!-- 5. Progress Notes and Privacy -->
+    <div class="section-title">5. Progress Notes and Privacy</div>
+    <p class="body-text">
+        The assigned caregiver will complete a brief progress note following each visit.
+        Progress notes may be shared with authorized parties in accordance with
+        applicable privacy legislation.
+    </p>
+
+    <!-- 6. Client Responsibilities -->
+    <div class="section-title">6. Client Responsibilities</div>
+    <p class="bullet">• Provide a safe home environment and disclose any known hazards, pets, or access requirements.</p>
+    <p class="bullet">• Provide accurate and up-to-date information about care needs, medications, and medical conditions.</p>
+    <p class="bullet">• Notify the Agency promptly of any concerns, changes in care needs, or changes in funding status.</p>
+
+    <!-- 7. Limitation of Liability -->
+    <div class="section-title">7. Limitation of Liability</div>
+    <p class="body-text">
+        Except in cases of gross negligence or wilful misconduct, the Agency's liability
+        under this Agreement is limited to the value of Services provided in the month
+        in which any claim arises.
+    </p>
+
+    <!-- 8. General -->
+    <div class="section-title">8. General</div>
+    <p class="bullet">• <strong>Governing Law:</strong> Province of British Columbia.</p>
+    <p class="bullet">• <strong>Entire Agreement:</strong> This Agreement, together with any signed intake form and service schedule, represents the entire understanding between the parties.</p>
+    <p class="bullet">• <strong>Amendments:</strong> Any changes to authorized hours, rates, or services must be agreed to in writing by both parties before taking effect.</p>
+
+    <!-- 9. Signatures -->
+    <div class="section-title">9. Signatures</div>
+    <p class="body-text">
+        By signing below, each party confirms they have read, understood, and agree
+        to be bound by the terms of this Agreement.
+    </p>
+    <table class="sig-table">
+        <tr>
+            <td>
+                <div>Client / Guardian Signature</div>
+                <div class="sig-line">&#160;</div>
+                <div style="margin-top:4px; font-size:10px;">Date: _______________</div>
+            </td>
+            <td>
+                <div>Payer / Case Manager Signature (if applicable)</div>
+                <div class="sig-line">&#160;</div>
+                <div style="margin-top:4px; font-size:10px;">Date: _______________</div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <div>Spectrum Home &amp; Family Care Representative</div>
+                <div class="sig-line">&#160;</div>
+                <div style="margin-top:4px; font-size:10px;">Date: _______________</div>
+            </td>
+        </tr>
+    </table>
+
+    <div style="margin-top:32px; text-align:center; font-size:10px; color:#999;">
+        Confidential — Client Service Agreement
+    </div>
+</div>
+</t>
+</t>
+</t>
+</template>
+
+<record id="action_report_contract" model="ir.actions.report">
+    <field name="name">Client Service Agreement</field>
+    <field name="model">jiv.contract.generate.wizard</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">jiv_spectrum_contract.report_contract_document</field>
+    <field name="report_file">jiv_spectrum_contract.report_contract_document</field>
+    <field name="paperformat_id" ref="paperformat_contract_a4"/>
+    <field name="binding_model_id" eval="False"/>
+    <field name="print_report_name">'CSA_%s' % object.client_name</field>
+</record>
+
+</odoo>

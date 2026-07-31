@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Generate Contract Wizard -->
+    <record id="view_jiv_contract_generate_wizard" model="ir.ui.view">
+        <field name="name">jiv.contract.generate.wizard.form</field>
+        <field name="model">jiv.contract.generate.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Generate Client Service Agreement">
+                <div class="alert alert-info mb-3" role="alert">
+                    Review and edit the details below before generating the PDF contract.
+                    All fields are pre-filled from the opportunity.
+                </div>
+                <group string="Parties">
+                    <group>
+                        <field name="lead_id" invisible="1"/>
+                        <field name="client_name"/>
+                        <field name="payer"/>
+                    </group>
+                </group>
+                <group string="Services">
+                    <group>
+                        <field name="service_type"/>
+                        <field name="authorized_hours_week"/>
+                        <field name="service_rate"/>
+                    </group>
+                    <group>
+                        <field name="monthly_budget"/>
+                        <field name="budget_expiry_date"/>
+                        <field name="start_date"/>
+                    </group>
+                </group>
+                <group string="Schedule">
+                    <group>
+                        <field name="preferred_days"/>
+                        <field name="notice_days"/>
+                    </group>
+                </group>
+                <group string="Billing &amp; Case Manager">
+                    <group>
+                        <field name="billing_contact_name"/>
+                        <field name="billing_contact_email"/>
+                    </group>
+                    <group>
+                        <field name="case_manager_name"/>
+                        <field name="case_manager_phone"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_confirm" type="object"
+                            string="Generate Contract" class="btn-primary"/>
+                    <button string="Discard" class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Email template for sending contract -->
+    <record id="email_template_contract" model="mail.template">
+        <field name="name">Spectrum: Client Service Agreement</field>
+        <field name="model_id" ref="crm.model_crm_lead"/>
+        <field name="subject">Your Spectrum Home &amp; Family Care Service Agreement</field>
+        <field name="email_from">{{ user.email_formatted or '' }}</field>
+        <field name="email_to">{{ object.partner_id.email or object.email_from or '' }}</field>
+        <field name="body_html" type="html">
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+                <p style="font-size: 15px;">Dear <t t-out="object.partner_id.name or object.partner_name or 'there'"/>,</p>
+                <p style="font-size: 15px; line-height: 1.6;">
+                    Please find attached your Client Service Agreement with Spectrum Home &amp; Family Care.
+                    You can also review and sign it online using the button below.
+                </p>
+                <div style="text-align: center; margin: 32px 0;">
+                    <a t-att-href="'%s/contract/sign/%s' % (env['ir.config_parameter'].sudo().get_param('web.base.url'), object.x_contract_token)"
+                       style="background-color: #875A7B; color: #ffffff; padding: 14px 32px;
+                              border-radius: 6px; text-decoration: none; font-size: 16px;
+                              font-weight: bold; display: inline-block;">
+                        Review &amp; Sign Agreement
+                    </a>
+                </div>
+                <p style="font-size: 13px; color: #666; line-height: 1.6;">
+                    Clicking the button above will open a secure page where you can
+                    review the agreement and acknowledge your acceptance with a digital signature.
+                </p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;"/>
+                <p style="font-size: 12px; color: #999; margin: 0;">
+                    Spectrum Home &amp; Family Care | Confidential
+                </p>
+            </div>
+        </field>
+        <field name="auto_delete" eval="False"/>
+    </record>
+
+</odoo>
