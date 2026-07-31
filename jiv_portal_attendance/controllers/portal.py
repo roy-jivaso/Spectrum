@@ -12,7 +12,31 @@ from odoo.addons.portal.controllers.portal import CustomerPortal, pager
 
 _logger = logging.getLogger(__name__)
 
+from odoo import _, fields, models
 
+
+class HrAttendancePortalMixin(models.Model):
+    """Give hr.attendance a chatter only.
+
+    portal.mixin removed — it adds access_token and _get_share_url()
+    which references fields (date_from) that don't exist on hr.attendance
+    in Odoo 19, causing ValueError on every portal page load.
+    """
+    _name = 'hr.attendance'
+    _inherit = ['hr.attendance', 'mail.thread']
+
+    def _message_get_suggested_recipients(self, *args, **kwargs):
+        try:
+            return super()._message_get_suggested_recipients(*args, **kwargs)
+        except TypeError:
+            return []
+
+    def _jiv_portal_message_post_hook(self):
+        """Notify the employee's manager when a portal user writes in."""
+        self.ensure_one()
+        manager = self.employee_id.parent_id.user_id
+        if manager:
+            self.message_subscribe(partner_ids=manager.partner_id.ids)
 class JivPortalAttendance(CustomerPortal):
 
     # ------------------------------------------------------------------
@@ -40,7 +64,6 @@ class JivPortalAttendance(CustomerPortal):
         return [('employee_id', '=', employee.id)]
 
     def _jiv_searchbar_sortings(self):
-        # check_out removed — module now uses create-form, not clock in/out
         return {
             'date':     {'label': _('Date'),     'order': 'check_in desc'},
             'duration': {'label': _('Duration'), 'order': 'worked_hours desc'},
@@ -99,7 +122,6 @@ class JivPortalAttendance(CustomerPortal):
         sortings = self._jiv_searchbar_sortings()
         filters = self._jiv_searchbar_filters()
 
-        # Catch any stale sortby value from old URLs/bookmarks
         if sortby not in sortings:
             sortby = 'date'
         if filterby not in filters:
@@ -148,24 +170,26 @@ class JivPortalAttendance(CustomerPortal):
     # Detail
     # ------------------------------------------------------------------
     @http.route(['/my/attendance/<int:attendance_id>'], type='http',
-                auth='public', website=True)
-    def jiv_portal_attendance_detail(self, attendance_id, access_token=None,
-                                     **kw):
-        try:
-            attendance_sudo = self._document_check_access(
-                'hr.attendance', attendance_id, access_token)
-        except (AccessError, MissingError):
-            return request.redirect('/my')
+                auth='user', website=True)
+    def jiv_portal_attendance_detail(self, attendance_id, **kw):
+        # portal.mixin removed from model so _document_check_access
+        # is not available — use plain sudo + own-record check instead
+        employee = request.env['hr.employee'].sudo().search(
+            [('user_id', '=', request.env.user.id)], limit=1)
+        if not employee:
+            return request.redirect('/my/attendances')
+
+        attendance = request.env['hr.attendance'].sudo().browse(attendance_id)
+        if not attendance.exists() or attendance.employee_id != employee:
+            return request.redirect('/my/attendances')
 
         Att = request.env['hr.attendance']
         return request.render(
             'jiv_portal_attendance.portal_attendance_detail', {
-                'attendance': attendance_sudo,
+                'attendance': attendance,
                 'page_name': 'attendance',
                 'needs_recipient': Att._jiv_has_recipient_field(),
                 'recipient_field': Att.JIV_RECIPIENT_FIELD,
-                'access_token': access_token,
-                'token': access_token,
             })
 
     # ------------------------------------------------------------------
