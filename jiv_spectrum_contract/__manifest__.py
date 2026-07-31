@@ -3,7 +3,7 @@
     'version': '19.0.1.0.0',
     'summary': 'Generate, send, and capture signed Client Service Agreements from CRM opportunities',
     'category': 'CRM',
-    'author': 'Zyvi Technologies',
+
     'depends': ['crm', 'sign', 'mail', 'website', 'jiv_spectrum_intake'],
     'data': [
         'security/ir.model.access.csv',

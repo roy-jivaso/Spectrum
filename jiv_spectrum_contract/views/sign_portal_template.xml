@@ -5,7 +5,6 @@
     <t t-call="website.layout">
         <t t-set="title">Client Service Agreement — Spectrum Home &amp; Family Care</t>
         <div class="container" style="max-width: 860px; padding: 32px 16px 64px;">
-
             <h2 class="mb-1">Client Service Agreement</h2>
             <p class="text-muted">Spectrum Home &amp; Family Care</p>
 
@@ -16,106 +15,333 @@
                 </div>
             </t>
             <t t-else="">
-                <!-- Embedded PDF viewer -->
-                <div class="border rounded mb-4" style="height: 600px; overflow: hidden;">
+                <!-- PDF viewer -->
+                <div class="border rounded mb-4" style="height:600px; overflow:hidden;">
                     <iframe t-att-src="'/web/content/%s?inline=true' % attachment_id"
                             style="width:100%; height:100%; border:none;"/>
                 </div>
 
-                <!-- Signature form -->
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title mb-3">Sign &amp; Acknowledge</h5>
                         <p class="text-muted small">
-                            By signing below, you confirm that you have read and agree
-                            to the terms of this Client Service Agreement.
+                            By signing below you confirm you have read and agree to
+                            the terms of this Client Service Agreement.
                         </p>
-                        <form action="/contract/sign/submit" method="post" id="sign_form">
+
+                        <form action="/contract/sign/submit" method="post" id="jiv_sign_form">
                             <input type="hidden" name="csrf_token"
                                    t-att-value="request.csrf_token()"/>
                             <input type="hidden" name="token" t-att-value="token"/>
+                            <input type="hidden" name="signature_data" id="jiv_sig_data"/>
 
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Full Name *</label>
-                                <input type="text" name="signer_name" class="form-control"
+                                <input type="text" name="signer_name" id="jiv_signer_name"
+                                       class="form-control"
                                        t-att-value="prefill_name" required="required"
                                        placeholder="Type your full legal name"/>
                             </div>
+
+                            <!-- ── Signature widget ── -->
                             <div class="mb-3">
-                                <label class="form-label fw-bold">Draw Your Signature *</label>
-                                <canvas id="sig-canvas"
-                                        style="border: 1px solid #ccc; border-radius: 4px;
-                                               width: 100%; height: 160px; cursor: crosshair;
-                                               background: #fff;"/>
-                                <input type="hidden" name="signature_data" id="sig-data"/>
-                                <div class="mt-1">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary"
-                                            id="sig-clear">Clear</button>
+                                <label class="form-label fw-bold">Signature *</label>
+
+                                <!-- Tab bar -->
+                                <div style="border:1px solid #dee2e6; border-radius:6px; overflow:hidden;">
+                                    <div style="display:flex; border-bottom:1px solid #dee2e6; background:#f8f9fa;">
+                                        <button type="button" class="jiv-sig-tab active"
+                                                data-tab="draw"
+                                                style="flex:1; padding:10px; border:none;
+                                                       background:transparent; font-weight:600;
+                                                       cursor:pointer; border-bottom:2px solid #875A7B;">
+                                            <i class="fa fa-pencil me-1"/> Draw
+                                        </button>
+                                        <button type="button" class="jiv-sig-tab"
+                                                data-tab="auto"
+                                                style="flex:1; padding:10px; border:none;
+                                                       background:transparent; cursor:pointer;
+                                                       border-bottom:2px solid transparent;">
+                                            <i class="fa fa-font me-1"/> Auto
+                                        </button>
+                                        <button type="button" class="jiv-sig-tab"
+                                                data-tab="load"
+                                                style="flex:1; padding:10px; border:none;
+                                                       background:transparent; cursor:pointer;
+                                                       border-bottom:2px solid transparent;">
+                                            <i class="fa fa-upload me-1"/> Load
+                                        </button>
+                                    </div>
+
+                                    <!-- DRAW tab -->
+                                    <div id="jiv-tab-draw" class="jiv-tab-pane"
+                                         style="padding:12px; background:#fff;">
+                                        <div id="jiv_draw_pad"
+                                             style="position:relative; height:150px;
+                                                    border:1px dashed #ccc; border-radius:4px;
+                                                    background:#fafafa; cursor:crosshair;">
+                                            <canvas id="jiv_sig_canvas"
+                                                    style="position:absolute;top:0;left:0;
+                                                           width:100%;height:100%;"/>
+                                            <span id="jiv_draw_hint"
+                                                  style="position:absolute;top:50%;left:50%;
+                                                         transform:translate(-50%,-50%);
+                                                         color:#bbb;font-size:13px;
+                                                         pointer-events:none;">
+                                                Draw your signature here
+                                            </span>
+                                        </div>
+                                        <button type="button" id="jiv_draw_clear"
+                                                class="btn btn-sm btn-outline-secondary mt-2">
+                                            <i class="fa fa-trash"/> Clear
+                                        </button>
+                                    </div>
+
+                                    <!-- AUTO tab -->
+                                    <div id="jiv-tab-auto" class="jiv-tab-pane"
+                                         style="display:none; padding:12px; background:#fff;">
+                                        <p class="text-muted small mb-2">
+                                            Select a style for your auto-generated signature.
+                                        </p>
+                                        <div id="jiv_auto_styles"
+                                             style="display:flex; gap:12px; flex-wrap:wrap;"/>
+                                        <canvas id="jiv_auto_canvas" style="display:none;"/>
+                                    </div>
+
+                                    <!-- LOAD tab -->
+                                    <div id="jiv-tab-load" class="jiv-tab-pane"
+                                         style="display:none; padding:12px; background:#fff;">
+                                        <p class="text-muted small mb-2">
+                                            Upload an image of your signature (PNG or JPG).
+                                        </p>
+                                        <input type="file" id="jiv_load_file"
+                                               accept="image/png,image/jpeg"
+                                               class="form-control mb-2"/>
+                                        <div id="jiv_load_preview"
+                                             style="height:120px; border:1px dashed #ccc;
+                                                    border-radius:4px; display:flex;
+                                                    align-items:center; justify-content:center;
+                                                    color:#bbb; font-size:13px;">
+                                            Preview will appear here
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+
                             <div class="mb-3 form-check">
                                 <input type="checkbox" class="form-check-input"
-                                       id="consent_check" required="required"/>
-                                <label class="form-check-label" for="consent_check">
+                                       id="jiv_consent" required="required"/>
+                                <label class="form-check-label" for="jiv_consent">
                                     I have read and agree to the Client Service Agreement above.
                                 </label>
                             </div>
+
                             <button type="submit" class="btn btn-primary btn-lg"
-                                    id="sign-submit-btn" disabled="disabled">
-                                Submit Signed Agreement
+                                    id="jiv_submit_btn" disabled="disabled">
+                                <i class="fa fa-check me-1"/> Submit Signed Agreement
                             </button>
                         </form>
                     </div>
                 </div>
 
                 <script type="text/javascript">
-                (function() {
-                    var canvas = document.getElementById('sig-canvas');
-                    var ctx = canvas.getContext('2d');
+                (function () {
+                    "use strict";
+
+                    // ── State ────────────────────────────────────────────
+                    var currentTab  = "draw";
+                    var hasDrawn    = false;
+                    var autoSel     = null;   // selected auto-style index
+                    var loadedImage = null;   // data-url from file upload
+
+                    var btn     = document.getElementById("jiv_submit_btn");
+                    var sigData = document.getElementById("jiv_sig_data");
+                    var consent = document.getElementById("jiv_consent");
+                    var nameEl  = document.getElementById("jiv_signer_name");
+
+                    // ── Tabs ─────────────────────────────────────────────
+                    document.querySelectorAll(".jiv-sig-tab").forEach(function (t) {
+                        t.addEventListener("click", function () {
+                            var tab = t.getAttribute("data-tab");
+                            currentTab = tab;
+                            document.querySelectorAll(".jiv-sig-tab").forEach(function (x) {
+                                x.style.borderBottom = "2px solid transparent";
+                                x.style.fontWeight   = "normal";
+                            });
+                            t.style.borderBottom = "2px solid #875A7B";
+                            t.style.fontWeight   = "600";
+                            document.querySelectorAll(".jiv-tab-pane").forEach(function (p) {
+                                p.style.display = "none";
+                            });
+                            document.getElementById("jiv-tab-" + tab).style.display = "";
+                            if (tab === "auto") buildAutoStyles();
+                            updateBtn();
+                        });
+                    });
+
+                    // ── DRAW tab ─────────────────────────────────────────
+                    var canvas  = document.getElementById("jiv_sig_canvas");
+                    var pad     = document.getElementById("jiv_draw_pad");
+                    var hint    = document.getElementById("jiv_draw_hint");
+                    var ctx     = canvas.getContext("2d");
                     var drawing = false;
-                    var hasDrawn = false;
 
-                    function resize() {
-                        var rect = canvas.getBoundingClientRect();
+                    function resizeCanvas() {
+                        var r = pad.getBoundingClientRect();
                         var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                        canvas.width = rect.width;
-                        canvas.height = 160;
-                        ctx.putImageData(img, 0, 0);
+                        canvas.width  = r.width;
+                        canvas.height = r.height;
+                        ctx.lineWidth   = 2.5;
+                        ctx.lineCap     = "round";
+                        ctx.lineJoin    = "round";
+                        ctx.strokeStyle = "#1a1a1a";
+                        if (hasDrawn) ctx.putImageData(img, 0, 0);
                     }
-                    resize();
-                    window.addEventListener('resize', resize);
+                    resizeCanvas();
+                    window.addEventListener("resize", resizeCanvas);
 
-                    function pos(e) {
+                    function getPos(e) {
                         var r = canvas.getBoundingClientRect();
-                        var src = e.touches ? e.touches[0] : e;
-                        return { x: src.clientX - r.left, y: src.clientY - r.top };
+                        var s = e.touches ? e.touches[0] : e;
+                        return { x: s.clientX - r.left, y: s.clientY - r.top };
                     }
+                    canvas.addEventListener("mousedown", function (e) {
+                        drawing = true;
+                        var p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y);
+                    });
+                    canvas.addEventListener("mousemove", function (e) {
+                        if (!drawing) return;
+                        var p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke();
+                        if (!hasDrawn) { hasDrawn = true; hint.style.display = "none"; }
+                        updateBtn();
+                    });
+                    canvas.addEventListener("mouseup",    function () { drawing = false; });
+                    canvas.addEventListener("mouseleave", function () { drawing = false; });
+                    canvas.addEventListener("touchstart", function (e) {
+                        e.preventDefault(); drawing = true;
+                        var p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y);
+                    }, { passive: false });
+                    canvas.addEventListener("touchmove", function (e) {
+                        e.preventDefault(); if (!drawing) return;
+                        var p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke();
+                        if (!hasDrawn) { hasDrawn = true; hint.style.display = "none"; }
+                        updateBtn();
+                    }, { passive: false });
+                    canvas.addEventListener("touchend", function () { drawing = false; });
 
-                    canvas.addEventListener('mousedown',  function(e) { drawing = true; var p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
-                    canvas.addEventListener('mousemove',  function(e) { if (!drawing) return; var p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); hasDrawn = true; updateBtn(); });
-                    canvas.addEventListener('mouseup',    function()  { drawing = false; });
-                    canvas.addEventListener('mouseleave', function()  { drawing = false; });
-                    canvas.addEventListener('touchstart', function(e) { e.preventDefault(); drawing = true; var p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
-                    canvas.addEventListener('touchmove',  function(e) { e.preventDefault(); if (!drawing) return; var p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); hasDrawn = true; updateBtn(); });
-                    canvas.addEventListener('touchend',   function()  { drawing = false; });
-
-                    document.getElementById('sig-clear').addEventListener('click', function() {
+                    document.getElementById("jiv_draw_clear").addEventListener("click", function () {
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        hasDrawn = false;
+                        hasDrawn = false; hint.style.display = "";
                         updateBtn();
                     });
 
-                    var consent = document.getElementById('consent_check');
-                    consent.addEventListener('change', updateBtn);
+                    // ── AUTO tab ─────────────────────────────────────────
+                    var FONTS = [
+                        { label: "Style 1", font: "italic 38px Georgia, serif" },
+                        { label: "Style 2", font: "italic 36px 'Palatino Linotype', serif" },
+                        { label: "Style 3", font: "36px 'Brush Script MT', cursive" },
+                        { label: "Style 4", font: "italic bold 32px 'Times New Roman', serif" },
+                    ];
+                    var autoBuilt = false;
 
-                    function updateBtn() {
-                        var btn = document.getElementById('sign-submit-btn');
-                        btn.disabled = !(hasDrawn and consent.checked);
+                    function buildAutoStyles() {
+                        if (autoBuilt) return;
+                        autoBuilt = true;
+                        var container = document.getElementById("jiv_auto_styles");
+                        var name = nameEl.value || "Your Name";
+                        FONTS.forEach(function (f, i) {
+                            var c = document.createElement("canvas");
+                            c.width = 220; c.height = 80;
+                            var cx = c.getContext("2d");
+                            cx.clearRect(0, 0, 220, 80);
+                            cx.font = f.font;
+                            cx.fillStyle = "#1a1a1a";
+                            cx.textBaseline = "middle";
+                            cx.fillText(name, 10, 42);
+                            // underline
+                            var w = Math.min(cx.measureText(name).width + 10, 210);
+                            cx.beginPath(); cx.moveTo(10, 62); cx.lineTo(w, 62);
+                            cx.strokeStyle = "#1a1a1a"; cx.lineWidth = 1; cx.stroke();
+
+                            var wrap = document.createElement("div");
+                            wrap.style.cssText = "border:2px solid #dee2e6; border-radius:6px;" +
+                                "cursor:pointer; overflow:hidden; background:#fff;";
+                            wrap.appendChild(c);
+                            wrap.addEventListener("click", function () {
+                                document.querySelectorAll("#jiv_auto_styles div").forEach(
+                                    function (w2) { w2.style.borderColor = "#dee2e6"; });
+                                wrap.style.borderColor = "#875A7B";
+                                autoSel = i;
+                                updateBtn();
+                            });
+                            container.appendChild(wrap);
+                        });
+
+                        // Rebuild when name changes
+                        nameEl.addEventListener("input", function () {
+                            autoBuilt = false;
+                            container.innerHTML = "";
+                            autoSel = null;
+                            buildAutoStyles();
+                            updateBtn();
+                        });
                     }
 
-                    document.getElementById('sign_form').addEventListener('submit', function() {
-                        document.getElementById('sig-data').value = canvas.toDataURL('image/png');
+                    // ── LOAD tab ─────────────────────────────────────────
+                    document.getElementById("jiv_load_file").addEventListener("change", function (e) {
+                        var file = e.target.files[0];
+                        if (!file) return;
+                        var reader = new FileReader();
+                        reader.onload = function (ev) {
+                            loadedImage = ev.target.result;
+                            var prev = document.getElementById("jiv_load_preview");
+                            prev.innerHTML = "";
+                            var img = document.createElement("img");
+                            img.src = loadedImage;
+                            img.style.cssText = "max-height:110px; max-width:100%; object-fit:contain;";
+                            prev.appendChild(img);
+                            updateBtn();
+                        };
+                        reader.readAsDataURL(file);
                     });
+
+                    // ── Validation + submit ──────────────────────────────
+                    consent.addEventListener("change", updateBtn);
+
+                    function isReady() {
+                        if (!consent.checked) return false;
+                        if (currentTab === "draw")  return hasDrawn;
+                        if (currentTab === "auto")  return autoSel !== null;
+                        if (currentTab === "load")  return loadedImage !== null;
+                        return false;
+                    }
+
+                    function updateBtn() {
+                        btn.disabled = !isReady();
+                    }
+
+                    document.getElementById("jiv_sign_form").addEventListener("submit", function () {
+                        if (currentTab === "draw") {
+                            sigData.value = canvas.toDataURL("image/png");
+                        } else if (currentTab === "auto") {
+                            // render selected auto style to a canvas
+                            var ac = document.createElement("canvas");
+                            ac.width = 400; ac.height = 100;
+                            var acx = ac.getContext("2d");
+                            var f = FONTS[autoSel];
+                            acx.font = f.font;
+                            acx.fillStyle = "#1a1a1a";
+                            acx.textBaseline = "middle";
+                            acx.fillText(nameEl.value || "Signature", 10, 50);
+                            var tw = Math.min(acx.measureText(nameEl.value || "Signature").width + 10, 390);
+                            acx.beginPath(); acx.moveTo(10, 78); acx.lineTo(tw, 78);
+                            acx.strokeStyle = "#1a1a1a"; acx.lineWidth = 1.5; acx.stroke();
+                            sigData.value = ac.toDataURL("image/png");
+                        } else if (currentTab === "load") {
+                            sigData.value = loadedImage;
+                        }
+                    });
+
                 })();
                 </script>
             </t>
