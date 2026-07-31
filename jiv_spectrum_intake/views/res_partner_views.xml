@@ -7,53 +7,95 @@
         <field name="arch" type="xml">
             <notebook position="inside">
                 <page string="Client Profile" name="client_profile">
+
+                    <!-- Client Info -->
                     <group string="Client Info">
-                        <field name="x_studio_date_of_birth"/>
-                        <field name="x_studio_emergency_contact_name"/>
-                        <field name="x_studio_emergency_contact_phone"/>
-                        <field name="x_studio_emergency_contact_relationship"/>
+                        <group>
+                            <field name="x_studio_date_of_birth"/>
+                            <field name="x_studio_emergency_contact_name"/>
+                        </group>
+                        <group>
+                            <field name="x_studio_emergency_contact_phone"/>
+                            <field name="x_studio_emergency_contact_relationship"/>
+                        </group>
                     </group>
+
+                    <!-- Payer / Funding -->
                     <group string="Payer / Funding">
-                        <field name="x_studio_payer_type"/>
-                        <field name="x_studio_bill_to"/>
-                        <field name="x_studio_claim_reference_"/>
-                        <field name="x_studio_referral_date"/>
-                        <field name="x_studio_case_manager_name"/>
-                        <field name="x_studio_case_manager_phone"/>
-                        <field name="x_studio_case_manager_email"/>
+                        <group>
+                            <field name="x_studio_payer_type"/>
+                            <field name="x_studio_bill_to"/>
+                            <field name="x_studio_claim_reference_"/>
+                            <field name="x_studio_referral_date"/>
+                        </group>
+                        <group>
+                            <field name="x_studio_case_manager_name"/>
+                            <field name="x_studio_case_manager_phone"/>
+                            <field name="x_studio_case_manager_email"/>
+                        </group>
                     </group>
+
+                    <!-- Services Requested -->
                     <group string="Services Requested">
-                        <field name="x_studio_service_types" widget="many2many_tags"/>
-                        <field name="x_studio_service_description"/>
-                        <field name="x_studio_authorized_hoursweek"/>
-                        <field name="x_studio_service_rate"/>
-                        <field name="x_studio_monthly_authorized_budget"/>
-                        <field name="x_studio_budgetauthorization_expiry_date"/>
+                        <group>
+                            <field name="x_studio_service_types" widget="many2many_tags"/>
+                            <field name="x_studio_service_description"/>
+                            <field name="x_studio_authorized_hoursweek"/>
+                        </group>
+                        <group>
+                            <field name="x_studio_service_rate"/>
+                            <field name="x_studio_monthly_authorized_budget"/>
+                            <field name="x_studio_budgetauthorization_expiry_date"/>
+                        </group>
                     </group>
+
+                    <!-- Schedule -->
                     <group string="Schedule">
-                        <field name="x_studio_desired_start_date"/>
-                        <field name="x_studio_estimated_hoursweek"/>
-                        <field name="x_studio_preferred_days" widget="many2many_tags"/>
-                        <field name="x_studio_preferred_time_of_day"/>
+                        <group>
+                            <field name="x_studio_desired_start_date"/>
+                            <field name="x_studio_estimated_hoursweek"/>
+                        </group>
+                        <group>
+                            <field name="x_studio_preferred_days" widget="many2many_tags"/>
+                            <field name="x_studio_preferred_time_of_day"/>
+                        </group>
                     </group>
+
+                    <!-- Care Considerations -->
                     <group string="Care Considerations">
-                        <field name="x_studio_mobility_needs"/>
-                        <field name="x_studio_allergies_medical_conditions"/>
-                        <field name="x_studio_medications"/>
-                        <field name="x_studio_caregiver_gender_preference"/>
-                        <field name="x_studio_language_preference"/>
-                        <field name="x_studio_pets_in_home"/>
-                        <field name="x_studio_access_instructions"/>
+                        <group>
+                            <field name="x_studio_mobility_needs"/>
+                            <field name="x_studio_allergies_medical_conditions"/>
+                            <field name="x_studio_medications"/>
+                            <field name="x_studio_caregiver_gender_preference"/>
+                        </group>
+                        <group>
+                            <field name="x_studio_language_preference"/>
+                            <field name="x_studio_pets_in_home"/>
+                            <field name="x_studio_access_instructions"/>
+                        </group>
                     </group>
+
+                    <!-- Additional Care Team -->
                     <group string="Additional Care Team">
-                        <field name="x_studio_physician_name"/>
-                        <field name="x_studio_physician_phone"/>
-                        <field name="x_studio_ot_name"/>
-                        <field name="x_studio_ot_phone"/>
+                        <group>
+                            <field name="x_studio_physician_name"/>
+                            <field name="x_studio_physician_phone"/>
+                        </group>
+                        <group>
+                            <field name="x_studio_ot_name"/>
+                            <field name="x_studio_ot_phone"/>
+                        </group>
                     </group>
+
+                    <!-- Consent -->
                     <group string="Consent">
-                        <field name="x_studio_consent_contact_by_phoneemail"/>
+                        <group>
+                            <field name="x_studio_consent_contact_by_phoneemail"/>
+                        </group>
+                        <group/>
                     </group>
+
                 </page>
             </notebook>
         </field>
