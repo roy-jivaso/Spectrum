@@ -12,31 +12,7 @@ from odoo.addons.portal.controllers.portal import CustomerPortal, pager
 
 _logger = logging.getLogger(__name__)
 
-from odoo import _, fields, models
 
-
-class HrAttendancePortalMixin(models.Model):
-    """Give hr.attendance a chatter only.
-
-    portal.mixin removed — it adds access_token and _get_share_url()
-    which references fields (date_from) that don't exist on hr.attendance
-    in Odoo 19, causing ValueError on every portal page load.
-    """
-    _name = 'hr.attendance'
-    _inherit = ['hr.attendance', 'mail.thread']
-
-    def _message_get_suggested_recipients(self, *args, **kwargs):
-        try:
-            return super()._message_get_suggested_recipients(*args, **kwargs)
-        except TypeError:
-            return []
-
-    def _jiv_portal_message_post_hook(self):
-        """Notify the employee's manager when a portal user writes in."""
-        self.ensure_one()
-        manager = self.employee_id.parent_id.user_id
-        if manager:
-            self.message_subscribe(partner_ids=manager.partner_id.ids)
 class JivPortalAttendance(CustomerPortal):
 
     # ------------------------------------------------------------------
@@ -57,6 +33,7 @@ class JivPortalAttendance(CustomerPortal):
     # Helpers
     # ------------------------------------------------------------------
     def _jiv_attendance_domain(self):
+        """Restrict to the current user's own records."""
         employee = request.env['hr.employee'].sudo().search(
             [('user_id', '=', request.env.user.id)], limit=1)
         if not employee:
@@ -64,12 +41,34 @@ class JivPortalAttendance(CustomerPortal):
         return [('employee_id', '=', employee.id)]
 
     def _jiv_searchbar_sortings(self):
-        return {
-            'date':     {'label': _('Date'),     'order': 'check_in desc'},
-            'duration': {'label': _('Duration'), 'order': 'worked_hours desc'},
+        """Sort options for the portal list.
+
+        'duration' orders on worked_hours, which is a computed field. If
+        it is not stored on this version, SQL cannot order by it and the
+        search raises - so that option is dropped rather than offered and
+        then failing when picked.
+        """
+        sortings = {
+            'check_in': {'label': _('Check In'), 'order': 'check_in desc'},
+            # NULLS LAST so still-open records do not sit above completed
+            # ones when sorting descending.
+            'check_out': {'label': _('Check Out'),
+                          'order': 'check_out desc NULLS LAST'},
         }
+        worked = request.env['hr.attendance']._fields.get('worked_hours')
+        if worked is not None and worked.store:
+            sortings['duration'] = {
+                'label': _('Duration'), 'order': 'worked_hours desc'}
+        return sortings
 
     def _jiv_searchbar_filters(self):
+        """Date windows matching the portal Filter By dropdown.
+
+        Boundaries are computed in the user's timezone then converted to
+        UTC, because check_in is a naive UTC datetime - filtering on the
+        server's day boundaries would put evening records in the wrong
+        day for anyone outside UTC.
+        """
         today = fields.Date.context_today(request.env.user)
         first_of_month = today.replace(day=1)
         quarter_start = today.replace(
@@ -80,11 +79,13 @@ class JivPortalAttendance(CustomerPortal):
         user_tz = pytz.timezone(request.env.user.tz or 'UTC')
 
         def to_utc(day):
+            """Midnight of `day` in the user's tz, as a naive UTC string."""
             local = user_tz.localize(datetime.combine(day, time.min))
             return fields.Datetime.to_string(
                 local.astimezone(pytz.UTC).replace(tzinfo=None))
 
         def window(start, end=None):
+            """Inclusive start, exclusive end."""
             dom = [('check_in', '>=', to_utc(start))]
             if end:
                 dom.append(('check_in', '<', to_utc(end)))
@@ -95,15 +96,43 @@ class JivPortalAttendance(CustomerPortal):
         last_year_start = year_start - relativedelta(years=1)
 
         return {
-            'all':          {'label': _('All'),          'domain': [],                                       'sequence': 10},
-            'today':        {'label': _('Today'),        'domain': window(today, today + timedelta(days=1)), 'sequence': 20},
-            'this_week':    {'label': _('This week'),    'domain': window(week_start),                       'sequence': 30},
-            'this_month':   {'label': _('This month'),   'domain': window(first_of_month),                   'sequence': 40},
-            'this_quarter': {'label': _('This Quarter'), 'domain': window(quarter_start),                    'sequence': 50},
-            'this_year':    {'label': _('This year'),    'domain': window(year_start),                       'sequence': 60},
-            'last_week':    {'label': _('Last week'),    'domain': window(last_week_start, week_start),      'sequence': 70},
-            'last_month':   {'label': _('Last month'),   'domain': window(last_month_start, first_of_month), 'sequence': 80},
-            'last_year':    {'label': _('Last year'),    'domain': window(last_year_start, year_start),      'sequence': 90},
+            'all': {'label': _('All'), 'domain': [], 'sequence': 10},
+            'today': {
+                'label': _('Today'),
+                'domain': window(today, today + timedelta(days=1)),
+                'sequence': 20,
+            },
+            'this_week': {
+                'label': _('This week'), 'domain': window(week_start),
+                'sequence': 30,
+            },
+            'this_month': {
+                'label': _('This month'), 'domain': window(first_of_month),
+                'sequence': 40,
+            },
+            'this_quarter': {
+                'label': _('This Quarter'), 'domain': window(quarter_start),
+                'sequence': 50,
+            },
+            'this_year': {
+                'label': _('This year'), 'domain': window(year_start),
+                'sequence': 60,
+            },
+            'last_week': {
+                'label': _('Last week'),
+                'domain': window(last_week_start, week_start),
+                'sequence': 70,
+            },
+            'last_month': {
+                'label': _('Last month'),
+                'domain': window(last_month_start, first_of_month),
+                'sequence': 80,
+            },
+            'last_year': {
+                'label': _('Last year'),
+                'domain': window(last_year_start, year_start),
+                'sequence': 90,
+            },
         }
 
     # ------------------------------------------------------------------
@@ -111,9 +140,9 @@ class JivPortalAttendance(CustomerPortal):
     # ------------------------------------------------------------------
     @http.route(['/my/attendances', '/my/attendances/page/<int:page>'],
                 type='http', auth='user', website=True)
-    def jiv_portal_attendances(self, page=1, sortby='date',
-                               filterby='all', search='', search_in='all',
-                               **kw):
+    def jiv_portal_attendances(self, page=1, sortby='check_in',
+                              filterby='all', search='', search_in='all',
+                              **kw):
         if not request.env.user._jiv_can_use_portal_attendance():
             return request.redirect('/my')
 
@@ -121,16 +150,18 @@ class JivPortalAttendance(CustomerPortal):
 
         sortings = self._jiv_searchbar_sortings()
         filters = self._jiv_searchbar_filters()
-
         if sortby not in sortings:
-            sortby = 'date'
+            sortby = 'check_in'
         if filterby not in filters:
             filterby = 'all'
 
         domain = self._jiv_attendance_domain() + filters[filterby]['domain']
 
         if search:
-            domain += [('check_in', 'ilike', search)]
+            # Only text-ish fields: an ilike against check_in casts the
+            # datetime and matches on the stored UTC string, which is
+            # both slow and wrong for anyone outside UTC.
+            domain += [('employee_id.name', 'ilike', search)]
 
         total = Attendance.search_count(domain)
         page_detail = pager(
@@ -170,32 +201,37 @@ class JivPortalAttendance(CustomerPortal):
     # Detail
     # ------------------------------------------------------------------
     @http.route(['/my/attendance/<int:attendance_id>'], type='http',
-                auth='user', website=True)
-    def jiv_portal_attendance_detail(self, attendance_id, **kw):
-        # portal.mixin removed from model so _document_check_access
-        # is not available — use plain sudo + own-record check instead
-        employee = request.env['hr.employee'].sudo().search(
-            [('user_id', '=', request.env.user.id)], limit=1)
-        if not employee:
-            return request.redirect('/my/attendances')
-
-        attendance = request.env['hr.attendance'].sudo().browse(attendance_id)
-        if not attendance.exists() or attendance.employee_id != employee:
-            return request.redirect('/my/attendances')
+                auth='public', website=True)
+    def jiv_portal_attendance_detail(self, attendance_id, access_token=None,
+                                     **kw):
+        try:
+            attendance_sudo = self._document_check_access(
+                'hr.attendance', attendance_id, access_token)
+        except (AccessError, MissingError):
+            return request.redirect('/my')
 
         Att = request.env['hr.attendance']
         return request.render(
             'jiv_portal_attendance.portal_attendance_detail', {
-                'attendance': attendance,
+                'attendance': attendance_sudo,
                 'page_name': 'attendance',
                 'needs_recipient': Att._jiv_has_recipient_field(),
                 'recipient_field': Att.JIV_RECIPIENT_FIELD,
+                'access_token': access_token,
+                'token': access_token,
             })
 
     # ------------------------------------------------------------------
     # Create
     # ------------------------------------------------------------------
     def _jiv_user_tz(self):
+        """Timezone for interpreting form input.
+
+        res.users.tz is often blank on portal users, and defaulting
+        straight to UTC makes every submitted time wrong by the local
+        offset - entering 7:30 PM IST would be read as 7:30 PM UTC and
+        rejected as being in the future.
+        """
         tz_name = (request.env.user.tz
                    or request.env.context.get('tz')
                    or request.httprequest.cookies.get('tz')
@@ -208,6 +244,11 @@ class JivPortalAttendance(CustomerPortal):
             return pytz.UTC
 
     def _jiv_local_to_utc(self, value):
+        """Convert a datetime-local form value to naive UTC.
+
+        The browser sends wall-clock time in the user's timezone
+        ('2026-07-30T19:30'); hr.attendance stores naive UTC.
+        """
         if not value:
             return None
         naive = datetime.strptime(value[:16], '%Y-%m-%dT%H:%M')
