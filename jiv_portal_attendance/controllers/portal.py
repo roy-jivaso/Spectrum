@@ -42,8 +42,8 @@ class JivPortalAttendance(CustomerPortal):
 
     def _jiv_searchbar_sortings(self):
         return {
-            'check_in': {'label': _('Check In'), 'order': 'check_in desc'},
-            'check_out': {'label': _('Check Out'), 'order': 'check_out desc'},
+            # 'check_in': {'label': _('Check In'), 'order': 'check_in desc'},
+            # 'check_out': {'label': _('Check Out'), 'order': 'check_out desc'},
             'duration': {'label': _('Duration'), 'order': 'worked_hours desc'},
         }
 
@@ -134,7 +134,7 @@ class JivPortalAttendance(CustomerPortal):
 
         Attendance = request.env['hr.attendance'].sudo()
 
-        # sortings = self._jiv_searchbar_sortings()
+        sortings = self._jiv_searchbar_sortings()
         filters = self._jiv_searchbar_filters()
         if sortby not in sortings:
             sortby = 'check_in'
