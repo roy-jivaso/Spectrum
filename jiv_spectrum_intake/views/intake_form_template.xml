@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-<!-- ═══════════════════════════════════════════════════════════════════
-     MAIN INTAKE FORM PAGE
-     ═══════════════════════════════════════════════════════════════════ -->
 <template id="intake_form_page" name="Spectrum Client Intake Form">
     <t t-call="website.layout">
         <t t-set="title">Client Intake Form — Spectrum Home &amp; Family Care</t>
         <div class="o_intake_page">
-
             <div class="container" style="max-width:760px; padding:32px 16px 64px;">
                 <h2 class="mb-1">Client Intake Form</h2>
                 <p class="text-muted mb-4">
@@ -22,9 +18,8 @@
                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                     <input type="hidden" name="token" t-att-value="token"/>
 
-                    <!-- ── 1. Client Information ─────────────────────── -->
+                    <!-- 1. Client Information -->
                     <h4 class="o_intake_section">1. Client Information</h4>
-
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Full Name</label>
@@ -63,21 +58,16 @@
                         </div>
                     </div>
 
-                    <!-- ── 2. Funding Source ─────────────────────────── -->
+                    <!-- 2. Funding Source -->
                     <h4 class="o_intake_section mt-4">2. How Did You Hear About Us / Funding Source</h4>
-
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Payer / Funding Type</label>
                             <select name="payer_type" class="form-select">
                                 <option value="">-- Select --</option>
-                                <option value="private_pay">Private Pay</option>
-                                <option value="blue_cross">Blue Cross</option>
-                                <option value="clbc">CLBC</option>
-                                <option value="icbc">ICBC</option>
-                                <option value="iha">Interior Health (IHA)</option>
-                                <option value="ahs">AHS</option>
-                                <option value="other">Other</option>
+                                <t t-foreach="payer_type_options" t-as="opt">
+                                    <option t-att-value="opt[0]"><t t-esc="opt[1]"/></option>
+                                </t>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -102,10 +92,9 @@
                         </div>
                     </div>
 
-                    <!-- ── 3. Services ───────────────────────────────── -->
+                    <!-- 3. Services -->
                     <h4 class="o_intake_section mt-4">3. Services You're Interested In</h4>
                     <p class="text-muted small">Please check all that apply.</p>
-
                     <div class="row g-2">
                         <t t-foreach="service_types" t-as="svc">
                             <div class="col-md-4">
@@ -121,15 +110,13 @@
                             </div>
                         </t>
                     </div>
-
                     <div class="mt-3">
                         <label class="form-label">Brief description of the support you're looking for</label>
                         <textarea name="service_description" class="form-control" rows="3"/>
                     </div>
 
-                    <!-- ── 4. Schedule Preferences ───────────────────── -->
+                    <!-- 4. Schedule Preferences -->
                     <h4 class="o_intake_section mt-4">4. Schedule Preferences</h4>
-
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Desired Start Date</label>
@@ -141,7 +128,6 @@
                                    min="0" step="0.5"/>
                         </div>
                     </div>
-
                     <div class="mt-3">
                         <label class="form-label d-block">Preferred Days</label>
                         <div class="d-flex flex-wrap gap-3">
@@ -158,23 +144,19 @@
                             </t>
                         </div>
                     </div>
-
                     <div class="mt-3">
                         <label class="form-label">Preferred Time of Day</label>
                         <select name="preferred_time_of_day" class="form-select">
                             <option value="">-- Select --</option>
-                            <option value="morning">Morning</option>
-                            <option value="afternoon">Afternoon</option>
-                            <option value="evening">Evening</option>
-                            <option value="overnight">Overnight</option>
-                            <option value="flexible">Flexible</option>
+                            <t t-foreach="time_of_day_options" t-as="opt">
+                                <option t-att-value="opt[0]"><t t-esc="opt[1]"/></option>
+                            </t>
                         </select>
                     </div>
 
-                    <!-- ── 5. Care Considerations ────────────────────── -->
+                    <!-- 5. Care Considerations -->
                     <h4 class="o_intake_section mt-4">5. Care Considerations</h4>
                     <p class="text-muted small">This helps us match you with a suitable caregiver — none of this is required to proceed.</p>
-
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label">Mobility Needs (e.g. walker, wheelchair, transfers)</label>
@@ -191,9 +173,10 @@
                         <div class="col-md-6">
                             <label class="form-label">Caregiver Preference</label>
                             <select name="caregiver_gender_preference" class="form-select">
-                                <option value="no_preference">No Preference</option>
-                                <option value="female">Female Caregiver</option>
-                                <option value="male">Male Caregiver</option>
+                                <option value="">-- Select --</option>
+                                <t t-foreach="gender_pref_options" t-as="opt">
+                                    <option t-att-value="opt[0]"><t t-esc="opt[1]"/></option>
+                                </t>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -212,9 +195,8 @@
                         </div>
                     </div>
 
-                    <!-- ── 6. Additional Care Team ───────────────────── -->
+                    <!-- 6. Additional Care Team -->
                     <h4 class="o_intake_section mt-4">6. Additional Care Team Contacts <span class="text-muted fw-normal">(optional)</span></h4>
-
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Physician Name</label>
@@ -234,9 +216,8 @@
                         </div>
                     </div>
 
-                    <!-- ── 7. Consent ────────────────────────────────── -->
+                    <!-- 7. Consent -->
                     <h4 class="o_intake_section mt-4">7. Consent</h4>
-
                     <div class="mb-2">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox"
@@ -263,7 +244,6 @@
                         team will follow up to schedule a meet-and-greet and finalize a Client
                         Service Agreement.
                     </p>
-
                     <div class="mt-4 text-center">
                         <button type="submit" class="btn btn-primary btn-lg">
                             Submit Intake Form
@@ -275,9 +255,6 @@
     </t>
 </template>
 
-<!-- ═══════════════════════════════════════════════════════════════════
-     THANK YOU PAGE
-     ═══════════════════════════════════════════════════════════════════ -->
 <template id="intake_thank_you" name="Intake Form — Thank You">
     <t t-call="website.layout">
         <t t-set="title">Thank You — Spectrum Home &amp; Family Care</t>
@@ -293,9 +270,6 @@
     </t>
 </template>
 
-<!-- ═══════════════════════════════════════════════════════════════════
-     INVALID TOKEN PAGE
-     ═══════════════════════════════════════════════════════════════════ -->
 <template id="intake_invalid" name="Intake Form — Invalid Link">
     <t t-call="website.layout">
         <t t-set="title">Invalid Link — Spectrum Home &amp; Family Care</t>
@@ -310,9 +284,6 @@
     </t>
 </template>
 
-<!-- ═══════════════════════════════════════════════════════════════════
-     ALREADY SUBMITTED PAGE
-     ═══════════════════════════════════════════════════════════════════ -->
 <template id="intake_already_submitted" name="Intake Form — Already Submitted">
     <t t-call="website.layout">
         <t t-set="title">Already Submitted — Spectrum Home &amp; Family Care</t>

@@ -28,12 +28,22 @@ class IntakeFormController(http.Controller):
         service_types = request.env['x_lead_service_types'].sudo().search([])
         preferred_days = request.env['x_lead_preferred_days'].sudo().search([])
 
+        # Load selection values directly from the field definition
+        def get_selection(field_name):
+            field = request.env['ir.model.fields'].sudo().search([
+                ('model', '=', 'crm.lead'), ('name', '=', field_name)
+            ], limit=1)
+            return [(s.value, s.name) for s in field.selection_ids.sorted('sequence')] if field else []
+
         return request.render('jiv_spectrum_intake.intake_form_page', {
             'token': token,
             'lead': lead,
             'prefill': prefill,
             'service_types': service_types,
             'preferred_days': preferred_days,
+            'payer_type_options': get_selection('x_studio_payer_type'),
+            'time_of_day_options': get_selection('x_studio_preferred_time_of_day'),
+            'gender_pref_options': get_selection('x_studio_caregiver_gender_preference'),
         })
 
     @http.route('/intake/submit', type='http', auth='public', website=True, methods=['POST'], csrf=True)
