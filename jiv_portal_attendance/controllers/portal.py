@@ -33,7 +33,6 @@ class JivPortalAttendance(CustomerPortal):
     # Helpers
     # ------------------------------------------------------------------
     def _jiv_attendance_domain(self):
-        """Restrict to the current user's own records."""
         employee = request.env['hr.employee'].sudo().search(
             [('user_id', '=', request.env.user.id)], limit=1)
         if not employee:
@@ -41,10 +40,10 @@ class JivPortalAttendance(CustomerPortal):
         return [('employee_id', '=', employee.id)]
 
     def _jiv_searchbar_sortings(self):
+        # check_out removed — module now uses create-form, not clock in/out
         return {
-            'check_in':  {'label': _('Check In'),  'order': 'check_in desc'},
-            'check_out': {'label': _('Check Out'), 'order': 'check_out desc'},
-            'duration':  {'label': _('Duration'),  'order': 'worked_hours desc'},
+            'date':     {'label': _('Date'),     'order': 'check_in desc'},
+            'duration': {'label': _('Duration'), 'order': 'worked_hours desc'},
         }
 
     def _jiv_searchbar_filters(self):
@@ -89,7 +88,7 @@ class JivPortalAttendance(CustomerPortal):
     # ------------------------------------------------------------------
     @http.route(['/my/attendances', '/my/attendances/page/<int:page>'],
                 type='http', auth='user', website=True)
-    def jiv_portal_attendances(self, page=1, sortby='check_in',
+    def jiv_portal_attendances(self, page=1, sortby='date',
                                filterby='all', search='', search_in='all',
                                **kw):
         if not request.env.user._jiv_can_use_portal_attendance():
@@ -100,17 +99,16 @@ class JivPortalAttendance(CustomerPortal):
         sortings = self._jiv_searchbar_sortings()
         filters = self._jiv_searchbar_filters()
 
+        # Catch any stale sortby value from old URLs/bookmarks
         if sortby not in sortings:
-            sortby = 'check_in'
+            sortby = 'date'
         if filterby not in filters:
             filterby = 'all'
 
         domain = self._jiv_attendance_domain() + filters[filterby]['domain']
 
         if search:
-            domain += ['|',
-                       ('employee_id.name', 'ilike', search),
-                       ('check_in', 'ilike', search)]
+            domain += [('check_in', 'ilike', search)]
 
         total = Attendance.search_count(domain)
         page_detail = pager(
