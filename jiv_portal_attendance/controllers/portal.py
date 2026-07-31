@@ -42,10 +42,9 @@ class JivPortalAttendance(CustomerPortal):
 
     def _jiv_searchbar_sortings(self):
         return {
-            'check_in': {'label': _('Check In'), 'order': 'check_in desc'},
+            'check_in':  {'label': _('Check In'),  'order': 'check_in desc'},
             'check_out': {'label': _('Check Out'), 'order': 'check_out desc'},
-            'duration': {'label': _('Duration'), 'order': 'worked_hours desc'},
-         
+            'duration':  {'label': _('Duration'),  'order': 'worked_hours desc'},
         }
 
     def _jiv_searchbar_filters(self):
@@ -74,15 +73,15 @@ class JivPortalAttendance(CustomerPortal):
         last_year_start = year_start - relativedelta(years=1)
 
         return {
-            'all':          {'label': _('All'),          'domain': [],                                    'sequence': 10},
+            'all':          {'label': _('All'),          'domain': [],                                       'sequence': 10},
             'today':        {'label': _('Today'),        'domain': window(today, today + timedelta(days=1)), 'sequence': 20},
-            'this_week':    {'label': _('This week'),    'domain': window(week_start),                    'sequence': 30},
-            'this_month':   {'label': _('This month'),   'domain': window(first_of_month),                'sequence': 40},
-            'this_quarter': {'label': _('This Quarter'), 'domain': window(quarter_start),                 'sequence': 50},
-            'this_year':    {'label': _('This year'),    'domain': window(year_start),                    'sequence': 60},
-            'last_week':    {'label': _('Last week'),    'domain': window(last_week_start, week_start),   'sequence': 70},
+            'this_week':    {'label': _('This week'),    'domain': window(week_start),                       'sequence': 30},
+            'this_month':   {'label': _('This month'),   'domain': window(first_of_month),                   'sequence': 40},
+            'this_quarter': {'label': _('This Quarter'), 'domain': window(quarter_start),                    'sequence': 50},
+            'this_year':    {'label': _('This year'),    'domain': window(year_start),                       'sequence': 60},
+            'last_week':    {'label': _('Last week'),    'domain': window(last_week_start, week_start),      'sequence': 70},
             'last_month':   {'label': _('Last month'),   'domain': window(last_month_start, first_of_month), 'sequence': 80},
-            'last_year':    {'label': _('Last year'),    'domain': window(last_year_start, year_start),   'sequence': 90},
+            'last_year':    {'label': _('Last year'),    'domain': window(last_year_start, year_start),      'sequence': 90},
         }
 
     # ------------------------------------------------------------------
@@ -90,7 +89,7 @@ class JivPortalAttendance(CustomerPortal):
     # ------------------------------------------------------------------
     @http.route(['/my/attendances', '/my/attendances/page/<int:page>'],
                 type='http', auth='user', website=True)
-    def jiv_portal_attendances(self, page=1, sortby='date_desc',
+    def jiv_portal_attendances(self, page=1, sortby='check_in',
                                filterby='all', search='', search_in='all',
                                **kw):
         if not request.env.user._jiv_can_use_portal_attendance():
@@ -101,9 +100,8 @@ class JivPortalAttendance(CustomerPortal):
         sortings = self._jiv_searchbar_sortings()
         filters = self._jiv_searchbar_filters()
 
-        # Graceful fallback for stale bookmarks / cached URLs
         if sortby not in sortings:
-            sortby = 'date_desc'
+            sortby = 'check_in'
         if filterby not in filters:
             filterby = 'all'
 
