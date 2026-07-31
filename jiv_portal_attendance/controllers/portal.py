@@ -45,8 +45,7 @@ class JivPortalAttendance(CustomerPortal):
             'check_in': {'label': _('Check In'), 'order': 'check_in desc'},
             'check_out': {'label': _('Check Out'), 'order': 'check_out desc'},
             'duration': {'label': _('Duration'), 'order': 'worked_hours desc'},
-            'date_desc': {'label': _('Newest First'), 'order': 'check_in desc'},
-            'date_asc': {'label': _('Oldest First'), 'order': 'check_in asc'},
+         
         }
 
     def _jiv_searchbar_filters(self):
