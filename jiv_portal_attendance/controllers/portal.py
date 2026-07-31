@@ -40,8 +40,15 @@ class JivPortalAttendance(CustomerPortal):
             return [('id', '=', False)]
         return [('employee_id', '=', employee.id)]
 
-    def _jiv_searchbar_sortings(self):
-        """Sort options for the portal list.
+    def _jiv_att_searchbar_sortings(self):
+        """Sort options for the portal attendance list.
+
+        NOTE the _jiv_att_ prefix. Every controller class inheriting
+        CustomerPortal is merged into a single class by Odoo, so a
+        helper named generically here would silently override - or be
+        overridden by - an identically named helper in another module.
+        That is exactly what happened between this module and
+        jiv_portal_payslip.
 
         'duration' orders on worked_hours, which is a computed field. If
         it is not stored on this version, SQL cannot order by it and the
@@ -61,7 +68,7 @@ class JivPortalAttendance(CustomerPortal):
                 'label': _('Duration'), 'order': 'worked_hours desc'}
         return sortings
 
-    def _jiv_searchbar_filters(self):
+    def _jiv_att_searchbar_filters(self):
         """Date windows matching the portal Filter By dropdown.
 
         Boundaries are computed in the user's timezone then converted to
@@ -148,8 +155,8 @@ class JivPortalAttendance(CustomerPortal):
 
         Attendance = request.env['hr.attendance'].sudo()
 
-        sortings = self._jiv_searchbar_sortings()
-        filters = self._jiv_searchbar_filters()
+        sortings = self._jiv_att_searchbar_sortings()
+        filters = self._jiv_att_searchbar_filters()
         if sortby not in sortings:
             sortby = 'check_in'
         if filterby not in filters:

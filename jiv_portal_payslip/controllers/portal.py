@@ -22,7 +22,13 @@ class JivPortalPayslip(CustomerPortal):
                 Payslip._jiv_portal_domain())
         return values
 
-    def _jiv_searchbar_sortings(self):
+    def _jiv_payslip_searchbar_sortings(self):
+        """Sort options for the payslip list.
+
+        Prefixed per module on purpose: all CustomerPortal subclasses are
+        merged into one class, so a generic helper name here would clash
+        with the same name in another portal module.
+        """
         return {
             'date': {'label': _('Period'), 'order': 'date_from desc'},
             'name': {'label': _('Reference'), 'order': 'name desc'},
@@ -38,7 +44,7 @@ class JivPortalPayslip(CustomerPortal):
         Payslip = request.env['hr.payslip']
         domain = Payslip._jiv_portal_domain()
 
-        sortings = self._jiv_searchbar_sortings()
+        sortings = self._jiv_payslip_searchbar_sortings()
         if sortby not in sortings:
             sortby = 'date'
 
