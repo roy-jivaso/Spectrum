@@ -134,7 +134,7 @@ class JivPortalAttendance(CustomerPortal):
 
         Attendance = request.env['hr.attendance'].sudo()
 
-        sortings = self._jiv_searchbar_sortings()
+        # sortings = self._jiv_searchbar_sortings()
         filters = self._jiv_searchbar_filters()
         if sortby not in sortings:
             sortby = 'check_in'
