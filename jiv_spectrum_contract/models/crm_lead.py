@@ -128,7 +128,7 @@ class CrmLead(models.Model):
             'x_contract_signed_date': fields.Datetime.now(),
         }
         self.write(vals)
-        body = "✅ <b>Client Service Agreement signed</b> by the client via the online portal."
+        body = "✅Client Service Agreement signed by the client via the online portal."
         if signed_attachment_id:
             body += f' <a href="/web/content/{signed_attachment_id}">Download signed copy</a>'
         self.message_post(
