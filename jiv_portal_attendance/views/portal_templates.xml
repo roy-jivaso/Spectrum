@@ -294,21 +294,21 @@
         condition is a long expression full of quotes and any future
         wording change upstream would silently stop the match.
     -->
-    <template id="jiv_portal_breadcrumb_task_label"
-              inherit_id="project.portal_layout"
-              name="Portal Breadcrumb: Rename Tasks"
-              priority="90">
+<!--    <template id="jiv_portal_breadcrumb_task_label"-->
+<!--              inherit_id="project.portal_layout"-->
+<!--              name="Portal Breadcrumb: Rename Tasks"-->
+<!--              priority="90">-->
 
-        <xpath expr="//li[a[@t-attf-href='/my/tasks?{{ keep_query() }}']]"
-               position="replace">
-            <li t-if="page_name == 'task' or (task and not project)"
-                t-attf-class="breadcrumb-item #{'active ' if not task else ''}">
-                <a t-if="task" t-attf-href="/my/tasks?{{ keep_query() }}">
-                    Progress Updates
-                </a>
-                <t t-else="">Progress Updates</t>
-            </li>
-        </xpath>
+<!--        <xpath expr="//li[a[@t-attf-href='/my/tasks?{{ keep_query() }}']]"-->
+<!--               position="replace">-->
+<!--            <li t-if="page_name == 'task' or (task and not project)"-->
+<!--                t-attf-class="breadcrumb-item #{'active ' if not task else ''}">-->
+<!--                <a t-if="task" t-attf-href="/my/tasks?{{ keep_query() }}">-->
+<!--                    Progress Updates-->
+<!--                </a>-->
+<!--                <t t-else="">Progress Updates</t>-->
+<!--            </li>-->
+<!--        </xpath>-->
 
-    </template>
+<!--    </template>-->
 </odoo>
