@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-<record id="jiv_attendance_gantt_form_notes" model="ir.ui.view">
-        <field name="name">hr.attendance.gantt.form.jiv.notes</field>
-        <field name="model">hr.attendance</field>
-        <field name="inherit_id"
-               ref="hr_attendance_gantt.hr_attendance_gantt_create_view_form"/>
-        <field name="priority">99</field>
-        <field name="arch" type="xml">
-            <xpath expr="//sheet" position="inside">
-                <group name="jiv_notes_group">
-                    <field name="jiv_notes" nolabel="1" colspan="2"
-                           placeholder="Add notes about this shift..."/>
-                </group>
-            </xpath>
-        </field>
-    </record>
+<!--<record id="jiv_attendance_gantt_form_notes" model="ir.ui.view">-->
+<!--        <field name="name">hr.attendance.gantt.form.jiv.notes</field>-->
+<!--        <field name="model">hr.attendance</field>-->
+<!--        <field name="inherit_id"-->
+<!--               ref="hr_attendance_gantt.hr_attendance_gantt_create_view_form"/>-->
+<!--        <field name="priority">99</field>-->
+<!--        <field name="arch" type="xml">-->
+<!--            <xpath expr="//sheet" position="inside">-->
+<!--                <group name="jiv_notes_group">-->
+<!--                    <field name="jiv_notes" nolabel="1" colspan="2"-->
+<!--                           placeholder="Add notes about this shift..."/>-->
+<!--                </group>-->
+<!--            </xpath>-->
+<!--        </field>-->
+<!--    </record>-->
 
 
 
