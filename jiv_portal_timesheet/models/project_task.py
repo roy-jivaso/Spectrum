@@ -69,7 +69,12 @@ class ProjectTask(models.Model):
         reload (module upgrade or service restart).
         """
         readable, writable = super()._portal_accessible_fields()
-        writable = writable | {'timesheet_ids', 'project_id', 'parent_id'}
+        writable = writable | {
+            'timesheet_ids',
+            'project_id',
+            'parent_id',
+            'x_studio_assignees',
+        }
         return readable | writable, writable
 
     def _jiv_check_portal_project(self, project_id):
