@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
- <record id="jiv_task_portal_create_rule" model="ir.rule">
+    <record id="jiv_task_portal_create_rule" model="ir.rule">
         <field name="name">Portal: create tasks on shared projects</field>
         <field name="model_id" ref="project.model_project_task"/>
         <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
@@ -12,7 +12,7 @@
         <field name="perm_create" eval="True"/>
         <field name="perm_unlink" eval="False"/>
     </record>
-        <record id="jiv_project_sharing_task_tree_create" model="ir.ui.view">
+           <record id="jiv_project_sharing_task_tree_create" model="ir.ui.view">
         <field name="name">project.task.project.sharing.list.jiv.create</field>
         <field name="model">project.task</field>
         <field name="inherit_id"
@@ -36,6 +36,7 @@
                 <attribute name="create">1</attribute>
             </kanban>
         </field>
+    </record>
     <!-- Project form: enable portal timesheets per project -->
     <record id="jiv_project_form_view" model="ir.ui.view">
         <field name="name">project.project.form.jiv.portal.timesheet</field>
