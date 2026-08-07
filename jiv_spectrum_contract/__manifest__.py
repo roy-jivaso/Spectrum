@@ -4,7 +4,7 @@
     'summary': 'Generate, send, and capture signed Client Service Agreements from CRM opportunities',
     'category': 'CRM',
 
-    'depends': ['crm', 'sign', 'mail', 'website', 'jiv_spectrum_intake'],
+    'depends': ['crm', 'sign','sale', 'mail', 'website', 'jiv_spectrum_intake'],
     'data': [
         'security/ir.model.access.csv',
         'data/report_paperformat.xml',
