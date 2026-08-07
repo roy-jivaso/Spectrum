@@ -2,7 +2,51 @@ import uuid
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
+from odoo import models
 
+
+class SaleOrder(models.Model):
+    _inherit = 'sale.order'
+
+    def _prepare_invoice(self):
+        vals = super()._prepare_invoice()
+        return vals
+
+    def _create_invoices(self, grouped=False, final=False, date=None):
+        moves = super()._create_invoices(
+            grouped=grouped, final=final, date=date
+        )
+        for move in moves:
+            self._jiv_add_client_sections(move)
+        return moves
+
+    def _jiv_add_client_sections(self, move):
+        """Insert a section line naming the client above each SO block."""
+        AML = self.env['account.move.line']
+        lines = move.invoice_line_ids.filtered(
+            lambda l: l.display_type == 'product'
+        )
+        seen = set()
+        seq = 0
+        new_lines = []
+        for line in lines.sorted(lambda l: (l.sale_line_ids[:1].order_id.id, l.id)):
+            order = line.sale_line_ids[:1].order_id
+            if order and order.id not in seen:
+                seen.add(order.id)
+                seq += 1
+                new_lines.append((0, 0, {
+                    'display_type': 'line_section',
+                    'name': self._jiv_section_label(order),
+                    'sequence': seq,
+                }))
+            seq += 1
+            new_lines.append((1, line.id, {'sequence': seq}))
+        if new_lines:
+            move.write({'invoice_line_ids': new_lines})
+
+    def _jiv_section_label(self, order):
+        client = order.partner_id.name
+        return f"{client} — {order.name}"
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
 
