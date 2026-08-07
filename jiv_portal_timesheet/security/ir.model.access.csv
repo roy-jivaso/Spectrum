@@ -2,3 +2,5 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_analytic_line_portal,account.analytic.line.portal,analytic.model_account_analytic_line,base.group_portal,1,1,1,1
 access_hr_employee_portal_read,hr.employee.portal.read,hr.model_hr_employee,base.group_portal,1,0,0,0
 access_project_task_jiv_portal_create,project.task.jiv.portal.create,project.model_project_task,base.group_portal,1,1,1,0
+access_resource_calendar_jiv_portal_read,resource.calendar.jiv.portal.read,resource.model_resource_calendar,base.group_portal,1,0,0,0
+access_resource_calendar_attendance_jiv_portal_read,resource.calendar.attendance.jiv.portal.read,resource.model_resource_calendar_attendance,base.group_portal,1,0,0,0

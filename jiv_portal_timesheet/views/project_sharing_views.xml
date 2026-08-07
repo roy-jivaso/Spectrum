@@ -1,35 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+<!--
+        Swap the stock 'Assignees' (portal_user_names) for the Studio
+        field x_studio_assignees in the Project Sharing form.
 
-    <!--
-        Makes the Timesheets tab editable in the Project Sharing form
-        (/my/projects/<id>/project_sharing/<task_id>).
+        Not using position="replace": portal_user_names renders three
+        times in the resolved arch (once on the form, twice as optional
+        columns in embedded lists). Replace would only hit the first and
+        leave the field name live elsewhere. Hiding + inserting after is
+        safer and reversible.
 
-        The base tab is defined by
-        hr_timesheet.project_sharing_inherit_project_task_view_form, which
-        ships it locked at two levels:
+        The [1] predicate pins this to the visible form field. It is the
+        xpath default, but stated explicitly so a future inherit that
+        injects an earlier occurrence fails loudly instead of silently
+        retargeting.
 
-            <field name="timesheet_ids" ... readonly="1">
-                <list ... create="false" delete="0">
-
-        Both have to be undone. High priority so this applies after
-        sale_timesheet_enterprise, which inherits the same base form.
+        x_studio_assignees is a Studio field and therefore NOT part of
+        this module's dependencies. If it does not exist on the target
+        database this record breaks the arch load. See README before
+        installing on a new instance.
     -->
-
-
-       <record id="jiv_projeddddct_sharing_task_form" model="ir.ui.view">
-        <field name="name">project.task.prxoject.sharing.form.jiv.timesheet</field>
+    <record id="jiv_project_sharing_task_form_assignees" model="ir.ui.view">
+        <field name="name">project.task.project.sharing.form.jiv.assignees</field>
         <field name="model">project.task</field>
         <field name="inherit_id"
                ref="project.project_sharing_project_task_view_form"/>
         <field name="mode">extension</field>
-        <field name="priority">99</field>
+        <field name="priority">999</field>
         <field name="arch" type="xml">
-             <xpath expr="//field[@name='portal_user_names']" position="replace">
-             <field name="x_studio_assignees"/>
-             </xpath>
+
+            <!-- Hide the stock field on the form itself -->
+            <xpath expr="//field[@name='portal_user_names'][1]"
+                   position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Insert the Studio field in its place -->
+            <xpath expr="//field[@name='portal_user_names'][1]"
+                   position="after">
+                <field name="x_studio_assignees" string="Assignees"
+                       class="o_task_user_field"/>
+            </xpath>
+
+            <!--
+                Embedded lists use column_invisible, not invisible.
+                This xpath matches both list occurrences at once.
+            -->
+            <xpath expr="//list//field[@name='portal_user_names']"
+                   position="attributes">
+                <attribute name="column_invisible">1</attribute>
+            </xpath>
+
+            <xpath expr="//list//field[@name='portal_user_names']"
+                   position="after">
+                <field name="x_studio_assignees" string="Assignees"
+                       optional="show"/>
+            </xpath>
+
         </field>
-       </record>
+    </record>
     <record id="jiv_project_sharing_task_form" model="ir.ui.view">
         <field name="name">project.task.project.sharing.form.jiv.timesheet</field>
         <field name="model">project.task</field>
