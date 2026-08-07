@@ -1,5 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+
+    <!--
+        Stock rule lets any non-limited collaborator write EVERY task in
+        the shared project. Narrow the collaborator branch to tasks the
+        portal user created themselves. The follower branch is left as
+        shipped so tasks explicitly shared with them stay editable.
+    -->
+    <record id="project.project_sharing_project_task_rule_portal"
+            model="ir.rule">
+        <field name="domain_force">[
+            ('project_id.privacy_visibility', 'in', ['invited_users', 'portal']),
+            ('active', '=', True),
+            '|',
+                '&amp;',
+                    ('message_partner_ids', 'child_of', [user.partner_id.commercial_partner_id.id]),
+                    ('project_id.collaborator_ids.partner_id', 'in', [user.partner_id.id]),
+                '&amp;',
+                    ('create_uid', '=', user.id),
+                    ('project_id.collaborator_ids', 'any', [
+                        ('partner_id', '=', user.partner_id.id),
+                        ('limited_access', '=', False),
+                    ]),
+        ]</field>
+    </record>
     <record id="jiv_task_portal_create_rule" model="ir.rule">
         <field name="name">Portal: create tasks on shared projects</field>
         <field name="model_id" ref="project.model_project_task"/>
