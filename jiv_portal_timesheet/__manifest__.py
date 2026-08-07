@@ -28,7 +28,7 @@ Key points
         'views/hr_timesheet_views.xml',
         'views/portal_timesheet_page.xml',
         'views/portal_templates_inline.xml',
-        'project_sharing_views.xml',
+        'views/project_sharing_views.xml',
     ],
     'assets': {
         'web.assets_frontend': [
