@@ -54,7 +54,7 @@
             <xpath expr="//list//field[@name='portal_user_names']"
                    position="after">
                 <field name="x_studio_assignees" string="Assignees"
-                       optional="show"/>
+                       optional="show" widget="many2many_tags"/>
             </xpath>
 
         </field>
