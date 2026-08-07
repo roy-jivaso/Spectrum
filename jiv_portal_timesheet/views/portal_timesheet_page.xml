@@ -12,7 +12,7 @@
             <attribute name="t-value">task.sudo().x_studio_assignees</attribute>
         </xpath>
     </template>
-</odoo>
+
     <!--
         Standalone timesheet page: /my/task/<id>/timesheets
 
