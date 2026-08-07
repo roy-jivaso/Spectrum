@@ -1,6 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+ <record id="jiv_task_portal_create_rule" model="ir.rule">
+        <field name="name">Portal: create tasks on shared projects</field>
+        <field name="model_id" ref="project.model_project_task"/>
+        <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+        <field name="domain_force">[
+            ('project_id.collaborator_ids.partner_id', '=', user.partner_id.id)
+        ]</field>
+        <field name="perm_read" eval="False"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+        <record id="jiv_project_sharing_task_tree_create" model="ir.ui.view">
+        <field name="name">project.task.project.sharing.list.jiv.create</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id"
+               ref="project.project_sharing_project_task_view_tree"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <list position="attributes">
+                <attribute name="create">1</attribute>
+            </list>
+        </field>
+    </record>
 
+    <record id="jiv_project_sharing_task_kanban_create" model="ir.ui.view">
+        <field name="name">project.task.project.sharing.kanban.jiv.create</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id"
+               ref="project.project_sharing_project_task_view_kanban"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <kanban position="attributes">
+                <attribute name="create">1</attribute>
+            </kanban>
+        </field>
     <!-- Project form: enable portal timesheets per project -->
     <record id="jiv_project_form_view" model="ir.ui.view">
         <field name="name">project.project.form.jiv.portal.timesheet</field>

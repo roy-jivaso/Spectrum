@@ -1,4 +1,5 @@
 from odoo import api, models, tools
+from odoo.exceptions import AccessError
 
 
 class ProjectTask(models.Model):
@@ -7,7 +8,8 @@ class ProjectTask(models.Model):
     @api.model
     @tools.ormcache(cache='stable')
     def _portal_accessible_fields(self):
-        """Add 'timesheet_ids' to the fields portal users may write.
+        """Add 'timesheet_ids' to the fields portal users may write, plus
+        the fields required to CREATE a task.
 
         Odoo restricts Project Sharing writes to the field set in
         TASK_PORTAL_WRITABLE_FIELDS; 'timesheet_ids' is not in it, so the
@@ -15,6 +17,10 @@ class ProjectTask(models.Model):
 
             Access Denied by ACLs for operation: write,
             model: project.task, field: timesheet_ids
+
+        'project_id' and 'parent_id' are added for the same reason on
+        create: every key in the vals dict is checked against this set,
+        and a create from the sharing view always carries project_id.
 
         Overriding the accessor rather than reassigning the class
         attribute avoids depending on the defining class's import path,
@@ -29,8 +35,14 @@ class ProjectTask(models.Model):
         jiv_allow_portal_timesheet ticked. That flag gates the view, not
         this whitelist.
 
+        Adding 'project_id' widens this further: a portal user could
+        re-parent an existing task into another project they collaborate
+        on. create() and write() below re-validate the target project
+        against edit-level collaboration.
+
         What still constrains the data:
           - ir.rule on account.analytic.line: own lines only, draft only
+          - ir.rule on project.task (perm_create): collaborator projects
           - create() override: stamps portal origin, forces approval state
           - write()/unlink() overrides: field-level restrictions
 
@@ -38,5 +50,38 @@ class ProjectTask(models.Model):
         reload (module upgrade or service restart).
         """
         readable, writable = super()._portal_accessible_fields()
-        writable = writable | {'timesheet_ids'}
+        writable = writable | {'timesheet_ids', 'project_id', 'parent_id'}
         return readable | writable, writable
+
+    def _jiv_check_portal_project(self, project_id):
+        """Raise unless the current portal user has edit-level access."""
+        if not project_id:
+            raise AccessError(
+                "A project must be selected when creating a task."
+            )
+        collab = self.env['project.collaborator'].sudo().search([
+            ('project_id', '=', project_id),
+            ('partner_id', '=', self.env.user.partner_id.id),
+        ], limit=1)
+        if not collab or collab.access_mode != 'edit':
+            raise AccessError(
+                "You do not have edit access to this project."
+            )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        if self.env.user._is_portal() and not self.env.context.get(
+            'jiv_skip_portal_field_check'
+        ):
+            for vals in vals_list:
+                self._jiv_check_portal_project(vals.get('project_id'))
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if (
+            'project_id' in vals
+            and self.env.user._is_portal()
+            and not self.env.context.get('jiv_skip_portal_field_check')
+        ):
+            self._jiv_check_portal_project(vals['project_id'])
+        return super().write(vals)
