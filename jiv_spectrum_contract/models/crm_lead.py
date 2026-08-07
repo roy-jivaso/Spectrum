@@ -3,7 +3,7 @@ from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
 from odoo import models
-from odoo.exceptions import UserError
+
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
@@ -21,64 +21,28 @@ class SaleOrder(models.Model):
         return moves
 
     def _jiv_add_client_sections(self, move):
-        """Insert a section line naming the client above each SO block.
-
-        Two fixes over the previous version:
-
-        1. sale_line_ids[:1] dropped the second order whenever Odoo merged
-           identical lines (same product/price/UoM) from different SOs into
-           one aml. We now map every linked order.
-        2. Sequences are assigned in a single ordered pass and written as
-           one command list, so new sections cannot collide with the
-           sequence of the line they head.
-        """
-        product_lines = move.invoice_line_ids.filtered(
+        """Insert a section line naming the client above each SO block."""
+        AML = self.env['account.move.line']
+        lines = move.invoice_line_ids.filtered(
             lambda l: l.display_type == 'product'
         )
-
-        # Bucket each invoice line under its originating order.
-        buckets = {}
-        shared = move.invoice_line_ids.browse()
-        for line in product_lines:
-            orders = line.sale_line_ids.mapped('order_id')
-            if len(orders) > 1:
-                shared |= line
-                continue
-            order = orders[:1]
-            if not order:
-                continue
-            buckets.setdefault(order, move.invoice_line_ids.browse())
-            buckets[order] |= line
-
-        if shared:
-            # One aml belongs to several SOs - it cannot sit under a single
-            # client heading. Surface it instead of silently mislabelling.
-            raise UserError(
-                "These invoice lines are shared across multiple sale "
-                "orders, so they cannot be grouped per client:\n%s\n\n"
-                "Disable invoice line merging for these products, or "
-                "differentiate them (description, analytic account) so "
-                "each sale order keeps its own line."
-                % "\n".join(shared.mapped('name'))
-            )
-
-        if len(buckets) < 2:
-            return
-
-        commands = []
-        seq = 10
-        for order in sorted(buckets, key=lambda o: o.name):
-            commands.append((0, 0, {
-                'display_type': 'line_section',
-                'name': self._jiv_section_label(order),
-                'sequence': seq,
-            }))
-            seq += 10
-            for line in buckets[order].sorted('id'):
-                commands.append((1, line.id, {'sequence': seq}))
-                seq += 10
-
-        move.write({'invoice_line_ids': commands})
+        seen = set()
+        seq = 0
+        new_lines = []
+        for line in lines.sorted(lambda l: (l.sale_line_ids[:1].order_id.id, l.id)):
+            order = line.sale_line_ids[:1].order_id
+            if order and order.id not in seen:
+                seen.add(order.id)
+                seq += 1
+                new_lines.append((0, 0, {
+                    'display_type': 'line_section',
+                    'name': self._jiv_section_label(order),
+                    'sequence': seq,
+                }))
+            seq += 1
+            new_lines.append((1, line.id, {'sequence': seq}))
+        if new_lines:
+            move.write({'invoice_line_ids': new_lines})
 
     def _jiv_section_label(self, order):
         client = order.partner_id.name
