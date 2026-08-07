@@ -15,6 +15,21 @@
         Both have to be undone. High priority so this applies after
         sale_timesheet_enterprise, which inherits the same base form.
     -->
+
+
+       <record id="jiv_projeddddct_sharing_task_form" model="ir.ui.view">
+        <field name="name">project.task.prxoject.sharing.form.jiv.timesheet</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id"
+               ref="project.project_sharing_project_task_view_form"/>
+        <field name="mode">extension</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+             <xpath expr="//field[@name='portal_user_names']" position="replace">
+             <field name="x_studio_assignees"/>
+             </xpath>
+        </field>
+       </record>
     <record id="jiv_project_sharing_task_form" model="ir.ui.view">
         <field name="name">project.task.project.sharing.form.jiv.timesheet</field>
         <field name="model">project.task</field>
