@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!--
+   <!--
         Stock rule lets any non-limited collaborator write EVERY task in
         the shared project. Narrow the collaborator branch to tasks the
         portal user created themselves. The follower branch is left as
         shipped so tasks explicitly shared with them stay editable.
+
+        WARNING: this overrides a core security rule. A future Odoo
+        update to project/security/project_security.xml will silently
+        restore the original domain - no error, just widened access.
+        Re-verify after every version upgrade.
     -->
-    <record id="project.project_sharing_project_task_rule_portal"
+    <record id="project.project_task_rule_portal_project_sharing"
             model="ir.rule">
         <field name="domain_force">[
             ('project_id.privacy_visibility', 'in', ['invited_users', 'portal']),
@@ -28,8 +33,11 @@
         <field name="name">Portal: create tasks on shared projects</field>
         <field name="model_id" ref="project.model_project_task"/>
         <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
-        <field name="domain_force">[
-            ('project_id.collaborator_ids.partner_id', '=', user.partner_id.id)
+      <field name="domain_force">[
+            ('project_id.collaborator_ids', 'any', [
+                ('partner_id', '=', user.partner_id.id),
+                ('limited_access', '=', False),
+            ])
         ]</field>
         <field name="perm_read" eval="False"/>
         <field name="perm_write" eval="False"/>
