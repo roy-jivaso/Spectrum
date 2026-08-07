@@ -26,7 +26,7 @@ Notes
 
     'category': 'Human Resources/Attendances',
     'license': 'LGPL-3',
-    'depends': ['hr_attendance', 'portal'],
+    'depends': ['hr_timesheet', 'project', 'portal', 'hr_attendance_gantt'],
     'data': [
         'security/portal_attendance_groups.xml',
         'security/ir.model.access.csv',

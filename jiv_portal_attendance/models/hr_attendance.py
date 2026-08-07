@@ -10,6 +10,12 @@ _logger = logging.getLogger(__name__)
 class HrAttendance(models.Model):
     _inherit = 'hr.attendance'
 
+
+
+    jiv_notes = fields.Text(
+        string="Notes",
+        help="Free-text notes recorded against this attendance entry.",
+    )
     jiv_from_portal = fields.Boolean(
         string='Logged from Portal',
         readonly=True,
