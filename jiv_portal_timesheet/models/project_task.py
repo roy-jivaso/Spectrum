@@ -71,10 +71,16 @@ class ProjectTask(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         if self.env.user._is_portal() and not self.env.context.get(
-            'jiv_skip_portal_field_check'
+                'jiv_skip_portal_field_check'
         ):
+            # Project Sharing passes the project via context on quick
+            # create; only the form carries it in vals.
+            ctx_project = self.env.context.get('default_project_id')
             for vals in vals_list:
-                self._jiv_check_portal_project(vals.get('project_id'))
+                project_id = vals.get('project_id') or ctx_project
+                self._jiv_check_portal_project(project_id)
+                if not vals.get('project_id'):
+                    vals['project_id'] = project_id
         return super().create(vals_list)
 
     def write(self, vals):
