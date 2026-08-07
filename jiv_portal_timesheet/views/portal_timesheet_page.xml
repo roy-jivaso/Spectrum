@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
+<template id="jiv_portal_tasks_list_assignees"
+              inherit_id="project.portal_tasks_list">
+<xpath expr="//th[text()='Assignees']" position="after">
+            <th>Assignees</th>
+        </xpath>
+        <xpath expr="//th[text()='Assignees'][1]" position="attributes">
+            <attribute name="class">d-none</attribute>
+        </xpath>
+        <xpath expr="//t[@t-set='assignees']" position="attributes">
+            <attribute name="t-value">task.sudo().x_studio_assignees</attribute>
+        </xpath>
+    </template>
+</odoo>
     <!--
         Standalone timesheet page: /my/task/<id>/timesheets
 
