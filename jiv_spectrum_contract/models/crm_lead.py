@@ -45,7 +45,7 @@ class SaleOrder(models.Model):
             move.write({'invoice_line_ids': new_lines})
 
     def _jiv_section_label(self, order):
-        client = order.partner_id.name
+        client = order.x_studio_client_care_recipient.name
         return f"{client} — {order.name}"
 class CrmLead(models.Model):
     _inherit = 'crm.lead'
