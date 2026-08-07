@@ -45,7 +45,7 @@ class HrAttendance(models.Model):
         if self.env.user._is_portal() and not self.env.context.get(
                 'jiv_skip_portal_field_check'):
             self._jiv_check_portal_own()
-            allowed = {'check_out'}
+            allowed = {'check_out', 'jiv_notes'}
             forbidden = set(vals) - allowed
             if forbidden:
                 raise AccessError(_(
@@ -118,7 +118,7 @@ class HrAttendance(models.Model):
 
     @api.model
     def jiv_portal_create_attendance(self, check_in, check_out=None,
-                                     recipient_id=None):
+                                     recipient_id=None, notes=None):
         """Create an attendance record on behalf of a portal user.
 
         Mirrors the backend form: the user supplies the client and both
@@ -139,6 +139,10 @@ class HrAttendance(models.Model):
         }
         if check_out:
             vals['check_out'] = check_out
+        if notes:
+            # Free text posted from a client-side form with no length
+            # bound of its own; cap it before it reaches the ORM.
+            vals['jiv_notes'] = notes.strip()[:4000]
 
         if self._jiv_has_recipient_field():
             if not recipient_id:
@@ -158,8 +162,52 @@ class HrAttendance(models.Model):
         return self.sudo().with_context(
             jiv_skip_portal_field_check=True).create(vals)
 
+    def jiv_portal_update_attendance(self, attendance_id, check_out=None,
+                                     notes=None):
+        """Amend an existing portal attendance on behalf of its owner.
+
+        Only check_out and notes may change. check_in and the care
+        recipient are fixed once submitted: they drive billing, and a
+        caregiver silently shifting a start time after the fact is the
+        thing this whole guard exists to prevent.
+
+        A closed record stays closed - reopening it, or moving an
+        already-recorded check_out, is an administrator action.
+        """
+        if not self.env.user._jiv_can_use_portal_attendance():
+            raise AccessError(_('You are not allowed to record attendance.'))
+
+        record = self.sudo().browse(int(attendance_id))
+        if not record.exists():
+            raise UserError(_('That attendance record no longer exists.'))
+        if record.employee_id.user_id != self.env.user:
+            raise AccessError(_(
+                'You can only access your own attendance records.'))
+
+        vals = {}
+
+        if check_out:
+            if record.check_out:
+                raise UserError(_(
+                    'This attendance is already closed. Please contact '
+                    'your administrator to change the check out time.'))
+            self._jiv_validate_period(
+                record.employee_id, record.check_in, check_out,
+                exclude_ids=record.ids)
+            vals['check_out'] = check_out
+
+        if notes is not None:
+            vals['jiv_notes'] = notes.strip()[:4000] or False
+
+        if not vals:
+            return record
+
+        record.with_context(jiv_skip_portal_field_check=True).write(vals)
+        return record
+
     @api.model
-    def _jiv_validate_period(self, employee, check_in, check_out=None):
+    def _jiv_validate_period(self, employee, check_in, check_out=None,
+                             exclude_ids=None):
         """Sanity checks a portal user's submitted period."""
         check_in = fields.Datetime.to_datetime(check_in)
         check_out = fields.Datetime.to_datetime(check_out) if check_out \
@@ -194,6 +242,8 @@ class HrAttendance(models.Model):
                        ('check_out', '>', fields.Datetime.to_string(check_in))]
         else:
             domain += [('check_out', '=', False)]
+        if exclude_ids:
+            domain += [('id', 'not in', list(exclude_ids))]
         if self.sudo().search_count(domain):
             raise UserError(_(
                 'This period overlaps an attendance you have already '

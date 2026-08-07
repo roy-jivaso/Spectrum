@@ -218,6 +218,14 @@ class JivPortalAttendance(CustomerPortal):
             return request.redirect('/my')
 
         Att = request.env['hr.attendance']
+        # Editing is only offered to the owner on a non-token visit:
+        # _document_check_access also succeeds for anyone holding the
+        # share link, and they must not be able to alter the record.
+        can_edit = (
+            not access_token
+            and not request.env.user._is_public()
+            and attendance_sudo.employee_id.user_id == request.env.user
+        )
         return request.render(
             'jiv_portal_attendance.portal_attendance_detail', {
                 'attendance': attendance_sudo,
@@ -226,7 +234,43 @@ class JivPortalAttendance(CustomerPortal):
                 'recipient_field': Att.JIV_RECIPIENT_FIELD,
                 'access_token': access_token,
                 'token': access_token,
+                'can_edit': can_edit,
+                'notify_type': request.params.get('notify'),
+                'notify_message': request.session.pop('jiv_att_message', None),
             })
+
+    @http.route(['/my/attendance/<int:attendance_id>/update'], type='http',
+                auth='user', website=True, methods=['POST'], csrf=True)
+    def jiv_portal_attendance_update(self, attendance_id, check_out=None,
+                                     notes=None, **post):
+        """Let the owner close a running shift and amend its notes.
+
+        Deliberately narrow: check_in and the care recipient stay fixed
+        once submitted, because those drive billing. The model's write()
+        guard enforces the same field set server-side, so a tampered
+        form cannot widen it.
+        """
+        try:
+            request.env['hr.attendance'].jiv_portal_update_attendance(
+                attendance_id,
+                check_out=self._jiv_local_to_utc(check_out),
+                notes=notes,
+            )
+            request.session['jiv_att_message'] = _('Attendance updated.')
+            notify = 'success'
+        except (UserError, AccessError, MissingError) as exc:
+            request.session['jiv_att_message'] = str(exc)
+            notify = 'danger'
+        except Exception:
+            _logger.exception(
+                'Portal attendance update failed for user %s on record %s',
+                request.env.user.id, attendance_id)
+            request.session['jiv_att_message'] = _(
+                'The attendance could not be updated. Please contact your '
+                'administrator.')
+            notify = 'danger'
+        return request.redirect(
+            '/my/attendance/%s?notify=%s' % (attendance_id, notify))
 
     # ------------------------------------------------------------------
     # Create
@@ -266,12 +310,13 @@ class JivPortalAttendance(CustomerPortal):
     @http.route(['/my/attendances/new'], type='http', auth='user',
                 website=True, methods=['POST'], csrf=True)
     def jiv_portal_attendance_create(self, check_in=None, check_out=None,
-                                     recipient_id=None, **post):
+                                     recipient_id=None, notes=None, **post):
         try:
             request.env['hr.attendance'].jiv_portal_create_attendance(
                 check_in=self._jiv_local_to_utc(check_in),
                 check_out=self._jiv_local_to_utc(check_out),
                 recipient_id=recipient_id or None,
+                notes=notes or None,
             )
             request.session['jiv_att_message'] = _(
                 'Attendance created successfully.')

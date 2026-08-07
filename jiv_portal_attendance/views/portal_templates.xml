@@ -141,7 +141,7 @@
                                        required="required"/>
                             </div>
 
-                            <div class="mb-0">
+                            <div class="mb-3">
                                 <label class="form-label" for="jiv_check_out">
                                     Check Out
                                 </label>
@@ -150,6 +150,15 @@
                                 <small class="text-muted">
                                     Leave empty if the shift is still running.
                                 </small>
+                            </div>
+
+                            <div class="mb-0">
+                                <label class="form-label" for="jiv_notes">
+                                    Notes
+                                </label>
+                                <textarea id="jiv_notes" name="notes"
+                                          class="form-control" rows="3"
+                                          placeholder="Add notes about this shift..."/>
                             </div>
                         </div>
 
@@ -178,6 +187,7 @@
                             <th t-if="needs_recipient">Client</th>
                             <th>Check In</th>
                             <th>Check Out</th>
+                            <th>Notes</th>
                             <th class="text-end">Duration</th>
                         </tr>
                     </thead>
@@ -197,6 +207,12 @@
                                 <span t-else="" class="badge text-bg-success">
                                     Running
                                 </span>
+                            </td>
+                            <td>
+                                <span t-if="att.jiv_notes" t-out="att.jiv_notes"
+                                      class="text-truncate d-inline-block"
+                                      style="max-width: 20rem;"
+                                      t-att-title="att.jiv_notes"/>
                             </td>
                             <td class="text-end">
                                 <span t-field="att.worked_hours"
@@ -221,6 +237,14 @@
                         <i class="fa fa-angle-left me-1"/>Back to list
                     </a>
                 </div>
+            </div>
+
+            <div t-if="notify_message"
+                 t-attf-class="alert alert-#{'success' if notify_type == 'success' else 'danger'} alert-dismissible"
+                 role="alert">
+                <span t-out="notify_message"/>
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="alert" aria-label="Close"/>
             </div>
 
             <div class="card mb-4">
@@ -251,13 +275,59 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6 mb-3">
                             <div class="text-muted small">Worked Time</div>
                             <div><span t-field="attendance.worked_hours"
                                        t-options='{"widget": "float_time"}'/></div>
                         </div>
+                        <div class="col-12">
+                            <div class="text-muted small">Notes</div>
+                            <div t-out="attendance.jiv_notes or '-'"
+                                 style="white-space: pre-wrap;"/>
+                        </div>
                     </div>
                 </div>
+            </div>
+
+            <!--
+                Edit card. Only rendered for the owner on a logged-in
+                visit; jiv_portal_update_attendance re-checks ownership
+                server-side, so this is presentation only.
+            -->
+            <div t-if="can_edit" class="card mb-4">
+                <div class="card-header">
+                    <t t-if="not attendance.check_out">Close this shift</t>
+                    <t t-else="">Update notes</t>
+                </div>
+                <form t-attf-action="/my/attendance/#{attendance.id}/update"
+                      method="post" class="card-body">
+                    <input type="hidden" name="csrf_token"
+                           t-att-value="request.csrf_token()"/>
+
+                    <div t-if="not attendance.check_out" class="mb-3">
+                        <label class="form-label" for="jiv_edit_check_out">
+                            Check Out
+                        </label>
+                        <input type="datetime-local" id="jiv_edit_check_out"
+                               name="check_out" class="form-control"
+                               required="required"/>
+                        <small class="text-muted">
+                            Once saved, the check out time can only be
+                            changed by an administrator.
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="jiv_edit_notes">
+                            Notes
+                        </label>
+                        <textarea id="jiv_edit_notes" name="notes" rows="3"
+                                  class="form-control"
+                                  t-out="attendance.jiv_notes or ''"/>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </form>
             </div>
 
             <h5 class="mb-3">Communication history</h5>
