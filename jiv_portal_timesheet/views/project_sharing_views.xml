@@ -1,25 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-<!--
-        Swap the stock 'Assignees' (portal_user_names) for the Studio
-        field x_studio_assignees in the Project Sharing form.
 
-        Not using position="replace": portal_user_names renders three
-        times in the resolved arch (once on the form, twice as optional
-        columns in embedded lists). Replace would only hit the first and
-        leave the field name live elsewhere. Hiding + inserting after is
-        safer and reversible.
-
-        The [1] predicate pins this to the visible form field. It is the
-        xpath default, but stated explicitly so a future inherit that
-        injects an earlier occurrence fails loudly instead of silently
-        retargeting.
-
-        x_studio_assignees is a Studio field and therefore NOT part of
-        this module's dependencies. If it does not exist on the target
-        database this record breaks the arch load. See README before
-        installing on a new instance.
-    -->
     <record id="jiv_project_sharing_task_form_assignees" model="ir.ui.view">
         <field name="name">project.task.project.sharing.form.jiv.assignees</field>
         <field name="model">project.task</field>
@@ -39,7 +20,7 @@
             <xpath expr="//field[@name='portal_user_names'][1]"
                    position="after">
                 <field name="x_studio_assignees" string="Assignees"
-                       class="o_task_user_field"/>
+                       class="o_task_user_field" widget="many2many_tags"/>
             </xpath>
 
             <!--
@@ -54,7 +35,7 @@
             <xpath expr="//list//field[@name='portal_user_names']"
                    position="after">
                 <field name="x_studio_assignees" string="Assignees"
-                       optional="show" widget="many2many_tags"/>
+                       optional="show" />
             </xpath>
 
         </field>
