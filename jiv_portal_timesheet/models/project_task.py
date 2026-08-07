@@ -54,7 +54,11 @@ class ProjectTask(models.Model):
         return readable | writable, writable
 
     def _jiv_check_portal_project(self, project_id):
-        """Raise unless the current portal user has edit-level access."""
+        """Raise unless the current portal user is an edit collaborator.
+
+        project.collaborator has no access_mode field in Odoo 19; the
+        read-only flag is limited_access (True = read only).
+        """
         if not project_id:
             raise AccessError(
                 "A project must be selected when creating a task."
@@ -63,7 +67,7 @@ class ProjectTask(models.Model):
             ('project_id', '=', project_id),
             ('partner_id', '=', self.env.user.partner_id.id),
         ], limit=1)
-        if not collab or collab.access_mode != 'edit':
+        if not collab or collab.limited_access:
             raise AccessError(
                 "You do not have edit access to this project."
             )
