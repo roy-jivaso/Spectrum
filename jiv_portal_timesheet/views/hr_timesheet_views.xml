@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
+  <data noupdate="0">
    <!--
         Stock rule lets any non-limited collaborator write EVERY task in
         the shared project. Narrow the collaborator branch to tasks the
@@ -116,5 +116,5 @@
         <field name="state">code</field>
         <field name="code">records.filtered('jiv_from_portal').action_jiv_refuse()</field>
     </record>
-
+  </data>
 </odoo>

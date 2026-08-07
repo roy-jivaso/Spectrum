@@ -5,6 +5,25 @@ from odoo.exceptions import AccessError
 class ProjectTask(models.Model):
     _inherit = 'project.task'
 
+    def write(self, vals):
+        if self.env.user._is_portal() and not self.env.context.get(
+                'jiv_skip_portal_field_check'
+        ):
+            foreign = self.sudo().filtered(
+                lambda t: t.create_uid.id != self.env.uid
+            )
+            if foreign:
+                raise AccessError(
+                    "You can only edit tasks you created yourself."
+                )
+        if (
+                'project_id' in vals
+                and self.env.user._is_portal()
+                and not self.env.context.get('jiv_skip_portal_field_check')
+        ):
+            self._jiv_check_portal_project(vals['project_id'])
+        return super().write(vals)
+
     @api.model
     @tools.ormcache(cache='stable')
     def _portal_accessible_fields(self):
