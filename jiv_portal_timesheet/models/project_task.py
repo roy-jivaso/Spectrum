@@ -1,4 +1,4 @@
-from odoo import api, models, tools
+from odoo import api, models, tools, _
 from odoo.exceptions import AccessError
 
 
