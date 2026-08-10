@@ -5,25 +5,61 @@ from odoo.exceptions import AccessError
 class ProjectTask(models.Model):
     _inherit = 'project.task'
 
-    def action_jiv_send_email(self):
-        self.ensure_one()
-        ctx = {
-            'default_model': 'project.task',
-            'default_res_ids': self.ids,
-            'default_composition_mode': 'comment',
-            'default_partner_ids': self.partner_id.ids,
-            'mark_task_as_sent': True,
-            'force_email': True,
-        }
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Send Email'),
-            'res_model': 'mail.compose.message',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': ctx,
-        }
+    from odoo import _, models
 
+    class ProjectTask(models.Model):
+        _inherit = 'project.task'
+
+        def _jiv_psw_partners(self):
+            """Partners assigned as PSW on this task.
+
+            Uses the Studio field when present, falling back to the stock
+            assignees so the template still renders on tasks created before
+            the field existed.
+            """
+            self.ensure_one()
+            if 'x_studio_assignees' in self._fields and self.x_studio_assignees:
+                return self.x_studio_assignees
+            return self.user_ids.mapped('partner_id')
+
+        def _jiv_psw_names(self):
+            return ', '.join(self._jiv_psw_partners().mapped('name'))
+
+        def _jiv_psw_emails(self):
+            return ','.join(
+                p.email for p in self._jiv_psw_partners() if p.email)
+
+        def _jiv_psw_phones(self):
+            return ', '.join(
+                p.mobile or p.phone
+                for p in self._jiv_psw_partners() if p.mobile or p.phone)
+
+        def _jiv_psw_pronoun(self):
+            return _('them') if len(self._jiv_psw_partners()) > 1 else _('her')
+
+        def _jiv_psw_pronoun_poss(self):
+            return _('their') if len(self._jiv_psw_partners()) > 1 else _('her')
+
+        def action_jiv_send_email(self):
+            self.ensure_one()
+            template = self.env.ref(
+                'jiv_portal_timesheet.jiv_mail_template_psw_introduction',
+                raise_if_not_found=False)
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('Send Email'),
+                'res_model': 'mail.compose.message',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': {
+                    'default_model': 'project.task',
+                    'default_res_ids': self.ids,
+                    'default_composition_mode': 'comment',
+                    'default_template_id': template.id if template else False,
+                    'default_partner_ids': self.partner_id.ids,
+                    'force_email': True,
+                },
+            }
     def write(self, vals):
         if self.env.user._is_portal() and not self.env.context.get(
                 'jiv_skip_portal_field_check'

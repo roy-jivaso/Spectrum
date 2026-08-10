@@ -2,6 +2,49 @@
 <odoo>
     <data noupdate="1">
 
+        <record id="jiv_mail_template_psw_introduction" model="mail.template">
+            <field name="name">Task: PSW Introduction</field>
+            <field name="model_id" ref="project.model_project_task"/>
+            <field name="subject">Introducing your Personal Support Worker</field>
+            <field name="email_from">{{ user.email_formatted }}</field>
+            <field name="partner_to">{{ object.partner_id.id }}</field>
+            <field name="email_cc">{{ object._jiv_psw_emails() }}</field>
+            <field name="auto_delete" eval="False"/>
+            <field name="body_html" type="html">
+<div style="margin:0px;padding:0px;font-size:13px;">
+    <p>Hi <t t-out="object.partner_id.name or 'there'"/>,</p>
+    <p>I hope this message finds you well.</p>
+    <p>
+        I'm pleased to introduce your new Personal Support Worker,
+        <strong t-out="object._jiv_psw_names() or 'your Personal Support Worker'"/>.
+        I've cc'd
+        <t t-out="object._jiv_psw_pronoun()"/>
+        on this email<t t-if="object._jiv_psw_phones()">, and
+        <t t-out="object._jiv_psw_pronoun_poss()"/> phone number is
+        <strong t-out="object._jiv_psw_phones()"/></t>.
+    </p>
+    <p>
+        <t t-out="object._jiv_psw_names() or 'Your Personal Support Worker'"/>
+        will be reaching out to you shortly to schedule a meet and greet.
+        During this meeting, you can discuss the services you require and
+        set the dates for support.
+    </p>
+    <p>
+        If you have any concerns or questions, or
+        <t t-out="object._jiv_psw_names() or 'your Personal Support Worker'"/>
+        doesn't contact you, please don't hesitate to reach out to me directly.
+    </p>
+    <p>
+        Warm regards,<br/>
+        <t t-out="user.name"/>
+    </p>
+</div>
+            </field>
+        </record>
+
+
+
+
         <!--
             Defaults, so the module is functional even without the
             Settings screen (views/res_config_settings_views.xml is
