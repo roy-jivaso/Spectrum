@@ -30,9 +30,10 @@ class ProjectTask(models.Model):
                 p.email for p in self._jiv_psw_partners() if p.email)
 
         def _jiv_psw_phones(self):
+            # res.partner.mobile was dropped in Odoo 19; phone is the only
+            # number field now.
             return ', '.join(
-                p.mobile or p.phone
-                for p in self._jiv_psw_partners() if p.mobile or p.phone)
+                p.phone for p in self._jiv_psw_partners() if p.phone)
 
         def _jiv_psw_pronoun(self):
             return _('them') if len(self._jiv_psw_partners()) > 1 else _('her')
