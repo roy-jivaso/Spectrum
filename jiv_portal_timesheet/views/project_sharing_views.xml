@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
+<record id="jiv_task_form_send_email" model="ir.ui.view">
+        <field name="name">project.task.form.jiv.send.email</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_form2"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_jiv_send_email" type="object"
+                        string="Send Email" class="btn-secondary"/>
+            </xpath>
+        </field>
+    </record>
     <record id="jiv_project_sharing_task_form_assignees" model="ir.ui.view">
         <field name="name">project.task.project.sharing.form.jiv.assignees</field>
         <field name="model">project.task</field>

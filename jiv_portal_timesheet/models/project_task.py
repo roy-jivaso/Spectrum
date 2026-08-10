@@ -5,6 +5,25 @@ from odoo.exceptions import AccessError
 class ProjectTask(models.Model):
     _inherit = 'project.task'
 
+    def action_jiv_send_email(self):
+        self.ensure_one()
+        ctx = {
+            'default_model': 'project.task',
+            'default_res_ids': self.ids,
+            'default_composition_mode': 'comment',
+            'default_partner_ids': self.partner_id.ids,
+            'mark_task_as_sent': True,
+            'force_email': True,
+        }
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Send Email'),
+            'res_model': 'mail.compose.message',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': ctx,
+        }
+
     def write(self, vals):
         if self.env.user._is_portal() and not self.env.context.get(
                 'jiv_skip_portal_field_check'
